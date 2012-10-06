@@ -19,7 +19,7 @@ DummyKinectInterface::~DummyKinectInterface() {
 // overriding abstract functions
 bool DummyKinectInterface::connectToKinect() {
 	//open dummy file
-	this->dumpFP = fopen(this->dumpFile, "r");
+	this->dumpFP = fopen(this->dumpFile, "rb");
 
 	return (NULL != this->dumpFP);
 }
@@ -32,14 +32,15 @@ bool DummyKinectInterface::processDepth(KinectReceiver *kr) {
 
 	//make some space for the depth data
 	int numItems = this->width * this->height;
-	USHORT *depthData;
-	depthData = new USHORT[numItems];
+	unsigned short *depthData;
+	depthData = new unsigned short[numItems];
 
 	//fetch the next frame of depth data
 	int attempt = 0;
 
-	while (true)
-		if (numItems == fread(depthData, sizeof(USHORT), numItems, this->dumpFP)) 
+	while (true) {
+		int read = fread(depthData, sizeof(unsigned short), numItems, this->dumpFP);
+		if (numItems == read) 
 			//successfully read the expected number of items
 			break;
 		else if (attempt++ < 1) 
@@ -49,6 +50,7 @@ bool DummyKinectInterface::processDepth(KinectReceiver *kr) {
 		else
 			//failed second time
 			return false;
+	}
 
 	for (int i = 0; i < numItems; i++)
 		kr->addPoint(depthData[i]);
