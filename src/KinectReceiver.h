@@ -5,7 +5,6 @@
 
 #include "GeometryGenerator.h"
 #include "vec3f.h"
-#include "NuiApi.h"
 
 class KinectReceiver : public GeometryGenerator {
 public:
@@ -15,7 +14,7 @@ public:
 	void initialiseImage(int width, int height);
 	void resetPointer();
 
-	void addPoint(USHORT depth);
+	void addPoint(unsigned short depth);
 
 	//inherited from GeometryGenerator
 	virtual void generate(RenderModel *callingModel, int resolution);
