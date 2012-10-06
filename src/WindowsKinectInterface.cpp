@@ -88,11 +88,6 @@ bool WindowsKinectInterface::connectToKinect() {
 bool WindowsKinectInterface::processDepth(KinectReceiver *kr) {
     HRESULT hr;
     NUI_IMAGE_FRAME imageFrame;
-#ifdef KINECT_DUMP
-    FILE *dump;
-    char dump_name[32];
-    static int dump_num = 0;
-#endif
 
     //get the depth frame
     hr = this->kinectSensor->NuiImageStreamGetNextFrame(this->kinectDepthStreamHandle, 0, &imageFrame);
@@ -117,11 +112,6 @@ bool WindowsKinectInterface::processDepth(KinectReceiver *kr) {
         const USHORT *depthBuffer = (const USHORT *)LockedRect.pBits;
         const USHORT *depthBufferEnd = depthBuffer + (this->depthWidth * this->depthHeight);
 
-#ifdef KINECT_DUMP
-        sprintf((char *)dump_name, "dump_%04d.dat", dump_num++);
-        dump = fopen((char *)dump_name, "w");
-#endif
-
 		//reset receiver
 		kr->initialiseImage(this->depthWidth, this->depthHeight);
 
@@ -129,17 +119,9 @@ bool WindowsKinectInterface::processDepth(KinectReceiver *kr) {
 			kr->addPoint(NuiDepthPixelToDepth(*depthBuffer));
             //*pixelData = NuiDepthPixelToDepth(*depthBuffer);
 
-#ifdef KINECT_DUMP
-            fwrite(pixelData, sizeof(USHORT), 1, dump);
-#endif
             pixelData++;
             depthBuffer++;
         }
-
-#ifdef KINECT_DUMP
-        fclose(dump);
-#endif
-
     }
 
     //unlock the frame
@@ -147,6 +129,23 @@ bool WindowsKinectInterface::processDepth(KinectReceiver *kr) {
 
     //release the frame
     this->kinectSensor->NuiImageStreamReleaseFrame(this->kinectDepthStreamHandle, &imageFrame);
+
+#ifdef KINECT_DUMP
+	//dump the depth data to file
+
+    FILE *dump;
+    static int dump_num = 0;
+    char dump_name[32];
+
+	//update dump file name
+	sprintf((char *)dump_name, "dump_%04d.dat", dump_num++);
+
+	//wb for write binary. just w doesn't work...
+	dump = fopen((char *)dump_name, "wb");
+	fwrite(this->depthData, sizeof(unsigned short), this->depthWidth * this->depthHeight, dump);
+	fclose(dump);
+
+#endif
 
 	return true;
 }
