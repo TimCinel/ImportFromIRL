@@ -17,10 +17,13 @@ typedef struct t_AppSettings {
 	unsigned int tesselation;
 	unsigned int duplication;
 	unsigned int lights;
+	
+	float x, y, z;
 
 	RenderMethod selectedMethod;
 
 	bool renderOptions[NUM_RENDER_OPTIONS];
+	bool running;
 
 } AppSettings;
 

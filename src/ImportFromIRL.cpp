@@ -54,7 +54,7 @@ RenderModel *method = NULL;
 void setRenderOptions()
 {
     glDisable(GL_LIGHTING);
-    glEnable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
 	glShadeModel(GL_SMOOTH);
 
 	glPolygonMode(
@@ -83,10 +83,12 @@ void init()
 	
 	memset(&settings, 0, sizeof(AppSettings));
 
+	settings.x = settings.y = settings.z = 0;
 	settings.renderOptions[RENDER_WIREFRAME] = DEFAULT_WIREFRAME;
 	settings.renderOptions[RENDER_OSD] = DEFAULT_OSD;
 	settings.tesselation = DEFAULT_TESSELATION;
 	settings.selectedMethod = DEFAULT_METHOD;
+	settings.running = true;
 
 	memset(&camera, 0, sizeof(Camera));
 	camera.sensitivity = 0.3f;
@@ -176,19 +178,22 @@ void display()
 		receiver = new KinectReceiver();
 
 	if (NULL == method)
-		method = new ImmediateModel(receiver, 0, GL_POINTS);
+		method = new ImmediateModel(receiver, 0, GL_TRIANGLES);
 
 	/* Clear the colour and depth buffer */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-	/* Camera transformations */
 	glLoadIdentity();
 
+	/* Camera transformations */
 	glTranslatef(0.0f, 0.0f, -camera.zoom);
 	glRotatef(camera.rotX, 1.0f, 0.0f, 0.0f);
 	glRotatef(camera.rotY, 0.0f, 1.0f, 0.0f);
 	
+
+	/* motion */
+	glTranslatef(settings.x, settings.y, settings.z);
 
 	/* Draw scene */
 	setRenderOptions();
@@ -231,65 +236,13 @@ void display()
     glPushMatrix();
 
 
-	/* get new depth data */
-    kinect->processDepth(receiver);
+	if (settings.running) {
+		/* get new depth data */
+		kinect->processDepth(receiver);
+	}
 
 	/* draw! */
     method->draw();
-
-	/* 
-	static const float pi = 3.14159265f;
-    static const float l_max = -2.0;
-    static const float wide_angle = (57 / 360.0f) * 2.0f*pi;
-    static const float high_angle = (43 / 360.0f) * 2.0f*pi;
-
-    static const float wide_offset = -wide_angle / 2;
-    static const float high_offset = -high_angle / 2;
-
-    //ignore first byte
-    static const USHORT max_depth = ((USHORT)(-1)) >> 4;
-    glBegin(GL_POINTS);
-
-    float x, y, z, scaleFactor;
-
-    USHORT *currentDepth = kinect->getDepthData();
-
-    for (int v = 0; v < kinect->getDepthHeight(); v++) {
-        for (int u = 0; u < kinect->getDepthWidth(); u++) {
-
-            if (0 == *currentDepth) {
-                //skip unknown vertices
-                currentDepth++;
-                continue;
-            }
-
-            x = l_max * sin(wide_offset + ((float)u / kinect->getDepthWidth()) * wide_angle);
-            y = l_max * sin(high_offset + ((float)v / kinect->getDepthHeight()) * high_angle);
-            z = l_max * 
-                cos(wide_offset + ((float)u / kinect->getDepthWidth()) * wide_angle) * 
-                cos(high_offset + ((float)v / kinect->getDepthHeight()) * high_angle);
-
-            //scale 
-            scaleFactor = (float)*currentDepth / max_depth;
-
-#if 0
-            if (0 == *currentDepth)
-                scaleFactor = 1.0;
-#endif
-
-            x *= scaleFactor;
-            y *= scaleFactor;
-            z *= scaleFactor;
-
-            glVertex3f(x, y, z);
-
-            currentDepth++;
-        }
-    }
-
-
-    glEnd();
-	*/
 
     glPopMatrix();
 
@@ -346,8 +299,17 @@ void keyDown(int key) {
 
 	if (key == SDLK_c)
 		quit();
+	else if (key == SDLK_w)
+		settings.z += 0.05;
+	else if (key == SDLK_a)
+		settings.x -= 0.05;
+	else if (key == SDLK_s)
+		settings.z -= 0.05;
 	else if (key == SDLK_d)
-		printf("Windw dimensions: %dx%d\n", windowWidth, windowHeight);
+		settings.x += 0.05;
+		//printf("Windw dimensions: %dx%d\n", windowWidth, windowHeight);
+	else if (key == SDLK_SPACE)
+		settings.running = !settings.running;
 	else if (key == SDLK_f)
 		printf("Frame rate: %f\n", currentFramerate);
 	else if (key == SDLK_m) { 

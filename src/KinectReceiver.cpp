@@ -3,7 +3,7 @@
 #include "RenderModel.h"
 
 #include <cstdio>
-#include <math.h>
+#include <cmath>
 
 KinectReceiver::KinectReceiver() :
 	depth(NULL),
@@ -73,7 +73,7 @@ void KinectReceiver::addPoint(unsigned short depth) {
     static const float high_angle = (43 / 360.0f) * 2.0f*pi;
     static const float wide_offset = -wide_angle / 2;
     static const float high_offset = -high_angle / 2;
-    static const unsigned short max_depth = (unsigned short)(-1);
+    static const unsigned short max_depth = 0x4000;		
 
 	point->x = l_max * sin(wide_offset + ((float)x / this->width) * wide_angle);
 	point->y = l_max * sin(high_offset + ((float)y / this->height) * high_angle);
@@ -95,9 +95,38 @@ void KinectReceiver::generate(RenderModel *callingModel, int resolution) {
 	//maximum number
 	callingModel->specifySize(this->width * this->height);
 
-	for (int y = 0; y < this->height; y++)
-		for (int x = 0; x < this->width; x++)
-			callingModel->specifyPoint(&(this->depth[y][x]), &(this->depth[y][x]));
+	for (int y = 0; y < this->height - 1; y++)
+		for (int x = 0; x < this->width - 1; x++) {
 
+			this->specifyTriangle(callingModel, y, x, y+1, x+1, y+1, x);
+			this->specifyTriangle(callingModel, y, x, y, x+1, y+1, x+1);
+
+		}
 
 }
+
+void KinectReceiver::specifyTriangle(RenderModel *callingModel, 
+									 int y1, int x1, 
+									 int y2, int x2, 
+									 int y3, int x3) 
+{
+
+#define THRESHOLD 0.01
+	if (
+	/*
+		*/
+		abs(this->depth[y1][x1].z - this->depth[y2][x2].z) > THRESHOLD ||
+		abs(this->depth[y2][x2].z - this->depth[y3][x3].z) > THRESHOLD ||
+		abs(this->depth[y1][x1].z - this->depth[y3][x3].z) > THRESHOLD ||
+		this->depth[y1][x1].z == 0 ||
+		this->depth[y2][x2].z == 0 ||
+		this->depth[y3][x3].z == 0
+	)
+		//the triangle's too big
+		return;
+
+	callingModel->specifyPoint(&(this->depth[y1][x1]), NULL);
+	callingModel->specifyPoint(&(this->depth[y2][x2]), NULL);
+	callingModel->specifyPoint(&(this->depth[y3][x3]), NULL);
+}
+
