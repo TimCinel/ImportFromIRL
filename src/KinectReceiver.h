@@ -8,11 +8,14 @@
 
 class KinectReceiver : public GeometryGenerator {
 private:
-	vec3f **depth;
-	int width, height;
+	vec3f *verts;
+	vec3f *norms;
+	int *vertTriMap;
+	unsigned int *tris;
+	vec3f *triNorms;
 
-	//keep track of current point
-	int x, y;
+	int width, height, triCount;
+	int pos;
 
 public:
 	KinectReceiver();
@@ -27,10 +30,13 @@ public:
 	virtual void generate(RenderModel *callingModel, int resolution);
 
 private:
-	void specifyTriangle(RenderModel *callingModel, 
-						 int y1, int x1, 
+	void cleanUp();
+
+	void specifyTriangle(int y1, int x1, 
 						 int y2, int x2, 
 						 int y3, int x3);
+
+	void drawTriangle(RenderModel *callingModel, int triangleNum);
 };
 
 #endif

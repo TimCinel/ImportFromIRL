@@ -4,68 +4,77 @@
 
 #include <cstdio>
 #include <cmath>
+#include <unordered_map>
 
 KinectReceiver::KinectReceiver() :
-	depth(NULL),
+	verts(NULL),
+	norms(NULL),
+	vertTriMap(NULL),
+	tris(NULL),
+	triNorms(NULL),
+	triCount(0),
 	width(0),
 	height(0),
-	x(0),
-	y(0) { } 
+	pos(0)
+	{ } 
 
 KinectReceiver::~KinectReceiver() {
-	//clean up dynamically-allocated memory
-	if (NULL != this->depth) {
-		for (int y = 0; y < this->height; y++)
-			delete [] this->depth[y];
-
-		delete [] this->depth;
-		this->depth = NULL;
-
-	}
-
+	this->cleanUp();
 }
 
 void KinectReceiver::initialiseImage(int width, int height) {
 
 	this->resetPointer();
-
-	if (this->width == width && this->height == height)
-		return;
-
-	if (NULL != this->depth) {
-		//depths already stored - delete them
-
-		for (int y = 0; y < this->height; y++)
-			//delete columns from this row
-			delete [] (this->depth[y]);
-
-		//delete rows
-		delete [] this->depth;
-	}
+	this->cleanUp();
 
 	this->width = width;
 	this->height = height;
 
-	//create rows
-	this->depth = new vec3f*[this->height];
+#define MAX_TRIS_PER_VERT 6
+#define TRI_MAP_INVALID_VAL -1
 
-	for (int y = 0; y < this->height; y++)
-		//create columns for this row
-		this->depth[y] = new vec3f[this->width];
+	this->verts = new vec3f[this->height * this->width];
+	this->norms = new vec3f[this->height * this->width];
+	this->vertTriMap = new int[this->height * this->width * MAX_TRIS_PER_VERT];
+	this->tris = new unsigned int[(this->height - 1) * (this->width - 1) * 2 * 3];
+	this->triNorms = new vec3f[(this->height - 1) * (this->width - 1) * 2];
+
+	//set the vertTriMap to empty
+	for (int i = 0; i < this->height * this->width * MAX_TRIS_PER_VERT; i++)
+		this->vertTriMap[i] = -1;
+
 }
 
 void KinectReceiver::resetPointer() {
-	this->x = 0;
-	this->y = 0;
+	this->pos = 0;
+	this->triCount = 0;
+}
+
+void KinectReceiver::cleanUp() {
+	//clean up dynamically-allocated memory
+	if (NULL != this->verts)
+		delete [] this->verts;
+	this->verts = NULL;
+
+	if (NULL != this->norms)
+		delete [] this->norms;
+	this->norms = NULL;
+
+	if (NULL != this->tris)
+		delete [] this->tris;
+	this->tris = NULL;
+
+	if (NULL != this->triNorms)
+		delete [] this->triNorms;
+	this->triNorms = NULL;
 }
 
 void KinectReceiver::addPoint(unsigned short depth) {
 
-	this->x = (this->x + 1) % this->width;
-	if (0 == this->x) 
-		this->y = (this->y + 1) % this->height;
+	vec3f *point = &(this->verts[this->pos++]);
 
-	vec3f *point = &(this->depth[y][x]);
+	int x = this->pos % this->width;
+	int y = this->pos / this->width;
 
 	static const float pi = 3.14159265f;
     static const float l_max = -2.0;
@@ -88,61 +97,111 @@ void KinectReceiver::addPoint(unsigned short depth) {
 	point->y *= scaleFactor;
 	point->z *= scaleFactor;
 
+	if (this->pos == this->height * this->width - 1) {
+
+		//get triangles based on vertexes
+		for (int y = 0; y < this->height - 1; y++) {
+			for (int x = 0; x < this->width - 1; x++) {
+				this->specifyTriangle(y, x, y+1, x+1, y+1, x);
+				this->specifyTriangle(y, x, y, x+1, y+1, x+1);
+			}
+		}
+
+		//get normals for each vertex
+		for (int i = 0; i < this->height * this->width; i++) {
+			vec3f *normal = &(this->norms[i]);
+			normal->x = normal->y = normal->z = 0.0;
+
+			int j = i * 6;
+			int jMax = j + 6;
+
+			//average all triangle surface normals associated with this vertex
+			while (this->vertTriMap[j] >= 0 && j < jMax) {
+				normal->x += this->triNorms[this->vertTriMap[j]].x;
+				normal->y += this->triNorms[this->vertTriMap[j]].y;
+				normal->z += this->triNorms[this->vertTriMap[j]].z;
+				j++;
+			}
+
+			//normalize vector
+			float magnitude = sqrt(pow(normal->x, 2) + pow(normal->y, 2) + pow(normal->z, 2));
+			normal->x /= magnitude;
+			normal->y /= magnitude;
+			normal->z /= magnitude;
+
+			//next vertex
+		}
+	}
 }
 
 void KinectReceiver::generate(RenderModel *callingModel, int resolution) {
 
-	//maximum number
-	callingModel->specifySize(this->width * this->height);
+	//number of points
+	callingModel->specifySize(this->triCount * 3);
 
-	for (int y = 0; y < this->height - 1; y++)
-		for (int x = 0; x < this->width - 1; x++) {
-
-			this->specifyTriangle(callingModel, y, x, y+1, x+1, y+1, x);
-			this->specifyTriangle(callingModel, y, x, y, x+1, y+1, x+1);
-
-		}
+	int triangleNum;
+	for (triangleNum = 0; triangleNum < this->triCount - 1; triangleNum++)
+		this->drawTriangle(callingModel, triangleNum);
+	return;
 
 }
 
-void KinectReceiver::specifyTriangle(RenderModel *callingModel, 
+void KinectReceiver::specifyTriangle(int y0, int x0, 
 									 int y1, int x1, 
-									 int y2, int x2, 
-									 int y3, int x3) 
+									 int y2, int x2) 
 {
 
 #define THRESHOLD 0.01
 
-	vec3f *p1, *p2, *p3;
-	p1 = &(this->depth[y1][x1]);
-	p2 = &(this->depth[y2][x2]);
-	p3 = &(this->depth[y3][x3]);
+	int indices[3];
+	vec3f *p[3];
+	p[0] = &(this->verts[indices[0] = y0 * this->width + x0]);
+	p[1] = &(this->verts[indices[1] = y1 * this->width + x1]);
+	p[2] = &(this->verts[indices[2] = y2 * this->width + x2]);
 
 	if (
 	/*
 		*/
-		abs(p1->z - p2->z) > THRESHOLD ||
-		abs(p2->z - p3->z) > THRESHOLD ||
-		abs(p3->z - p1->z) > THRESHOLD ||
-		p1->z == 0 || p2->z == 0 || p3->z == 0
+		abs(p[0]->z - p[1]->z) > THRESHOLD ||
+		abs(p[1]->z - p[2]->z) > THRESHOLD ||
+		abs(p[2]->z - p[0]->z) > THRESHOLD ||
+		p[0]->z == 0 || p[1]->z == 0 || p[2]->z == 0
 	)
 		//the triangle's a PITA
 		return;
 
-	//calculate surface normal
-	vec3f normal;
-	normal.x = ((p1->y - p2->y) * (p2->z - p3->z) - (p1->z - p2->z) * (p2->y - p3->y));
-	normal.y = ((p1->z - p2->z) * (p2->x - p3->x) - (p1->x - p2->x) * (p2->z - p3->z));
-	normal.z = ((p1->x - p2->x) * (p2->y - p3->y) - (p1->y - p2->y) * (p2->x - p3->x));
+	//record this triangle
+	for (int i = 0; i < 3; i++) {
+		int j = indices[i] * 6;
+		int jMax = j + 6 - 1;
+		while (this->vertTriMap[j] >= 0 && j < jMax)
+			j++;
 
-	float magnitude = sqrt(pow(normal.x, 2) + pow(normal.y, 2) + pow(normal.z, 2));
+		this->vertTriMap[j] = triCount;
+	}
 
-	normal.x /= magnitude;
-	normal.y /= magnitude;
-	normal.z /= magnitude;
 
-	callingModel->specifyPoint(p1, &normal);
-	callingModel->specifyPoint(p2, &normal);
-	callingModel->specifyPoint(p3, &normal);
+	//calculate surface normal (Cross product of p[0]_\p[1] and p[1]_\p[2])
+	vec3f *normal = &(this->triNorms[triCount]);
+	normal->x = ((p[0]->y - p[1]->y) * (p[1]->z - p[2]->z) - (p[0]->z - p[1]->z) * (p[1]->y - p[2]->y));
+	normal->y = ((p[0]->z - p[1]->z) * (p[1]->x - p[2]->x) - (p[0]->x - p[1]->x) * (p[1]->z - p[2]->z));
+	normal->z = ((p[0]->x - p[1]->x) * (p[1]->y - p[2]->y) - (p[0]->y - p[1]->y) * (p[1]->x - p[2]->x));
+
+	int triPos = this->triCount * 3;
+	this->tris[triPos + 0] = y0 * this->width + x0;
+	this->tris[triPos + 1] = y1 * this->width + x1;
+	this->tris[triPos + 2] = y2 * this->width + x2;
+
+	this->triCount++;
+
 }
 
+void KinectReceiver::drawTriangle(RenderModel *callingModel, int triangleNum)  {
+	triangleNum *= 3;
+	for (int i = 0; i < 3; i++)
+		callingModel->specifyPoint(
+			&(this->verts[this->tris[triangleNum + i]]), 
+			&(this->norms[this->tris[triangleNum + i]])
+		);
+
+}

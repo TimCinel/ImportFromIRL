@@ -281,7 +281,7 @@ void mouseMove(int x, int y) {
 }
 
 void keyDown(int key) {
-	bool deleteMethod = false, deleteShape = false;
+bool deleteMethod = false, deleteShape = false;
 
 	if (key == SDLK_c)
 		quit();
