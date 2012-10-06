@@ -16,13 +16,14 @@
 
 #include "AbstractKinectInterface.h"
 #include "WindowsKinectInterface.h"
+#include "DummyKinectInterface.h"
 
 #include "RenderModel.h"
 #include "ImmediateModel.h"
 #include "VertexBufferObjectModel.h"
 
 #include "GeometryGenerator.h"
-#include "TorusGen.h"
+#include "KinectReceiver.h"
 
 #include "Camera.h"
 #include "vec3f.h"
@@ -72,7 +73,7 @@ void init()
 	glutInit(&argc, &argv);
 #endif
 
-    kinect = new WindowsKinectInterface();
+	kinect = new DummyKinectInterface(320, 240, "../data/dump.dat");
     kinect->connectToKinect();
 
 	glewInit();
@@ -175,7 +176,7 @@ void display()
 		receiver = new KinectReceiver();
 
 	if (NULL == method)
-		method = new ImmediateModel(receiver, 0, GL_TRIANGLES);
+		method = new ImmediateModel(receiver, 0, GL_POINTS);
 
 	/* Clear the colour and depth buffer */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
