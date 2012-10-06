@@ -85,13 +85,13 @@
   <ItemGroup>
     <ClInclude Include="..\src\AbstractKinectInterface.h" />
     <ClInclude Include="..\src\Camera.h" />
+    <ClInclude Include="..\src\DummyKinectInterface.h" />
     <ClInclude Include="..\src\GeometryGenerator.h" />
     <ClInclude Include="..\src\ImmediateModel.h" />
     <ClInclude Include="..\src\ImportFromIRL.h" />
     <ClInclude Include="..\src\WindowsKinectInterface.h" />
     <ClInclude Include="..\src\KinectReceiver.h" />
     <ClInclude Include="..\src\stdafx.h" />
-    <ClInclude Include="..\src\TorusGen.h" />
     <ClInclude Include="..\src\vec3f.h" />
     <ClInclude Include="..\src\RenderModel.h" />
     <ClInclude Include="..\src\sdlbase.h" />
@@ -99,12 +99,12 @@
     <ClInclude Include="..\src\VertexBufferObjectModel.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\DummyKinectInterface.cpp" />
     <ClCompile Include="..\src\ImmediateModel.cpp" />
     <ClCompile Include="..\src\ImportFromIRL.cpp" />
     <ClCompile Include="..\src\WindowsKinectInterface.cpp" />
     <ClCompile Include="..\src\KinectReceiver.cpp" />
     <ClCompile Include="..\src\sdlbase.cpp" />
-    <ClCompile Include="..\src\TorusGen.cpp" />
     <ClCompile Include="..\src\VertexArrayModel.cpp" />
     <ClCompile Include="..\src\VertexBufferObjectModel.cpp" />
   </ItemGroup>
