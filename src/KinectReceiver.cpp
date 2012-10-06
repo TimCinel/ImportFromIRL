@@ -151,7 +151,7 @@ void KinectReceiver::specifyTriangle(int y0, int x0,
 									 int y2, int x2) 
 {
 
-#define THRESHOLD 0.01
+#define THRESHOLD 0.05
 
 	int indices[3];
 	vec3f *p[3];
@@ -160,10 +160,15 @@ void KinectReceiver::specifyTriangle(int y0, int x0,
 	p[2] = &(this->verts[indices[2] = y2 * this->width + x2]);
 
 	if (
-	/*
-		*/
+		//stop LONNNNNG objects
+		abs(p[0]->x - p[1]->x) > THRESHOLD ||
+		abs(p[0]->y - p[1]->y) > THRESHOLD ||
 		abs(p[0]->z - p[1]->z) > THRESHOLD ||
+		abs(p[1]->x - p[2]->x) > THRESHOLD ||
+		abs(p[1]->y - p[2]->y) > THRESHOLD ||
 		abs(p[1]->z - p[2]->z) > THRESHOLD ||
+		abs(p[2]->x - p[0]->x) > THRESHOLD ||
+		abs(p[2]->y - p[0]->y) > THRESHOLD ||
 		abs(p[2]->z - p[0]->z) > THRESHOLD ||
 		p[0]->z == 0 || p[1]->z == 0 || p[2]->z == 0
 	)
