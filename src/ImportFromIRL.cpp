@@ -30,6 +30,7 @@
 
 
 /* Setting  Defaults */
+#define DEFAULT_LIGHTING		true
 #define DEFAULT_WIREFRAME		false
 #define DEFAULT_OSD				true
 #define DEFAULT_TESSELATION		64
@@ -53,9 +54,34 @@ RenderModel *method = NULL;
 /* Update opengl state to match flags in renderOptions */
 void setRenderOptions()
 {
-    glDisable(GL_LIGHTING);
-    glDisable(GL_CULL_FACE);
+
+	//GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+	//GLfloat mat_shininess[] = { 50.0 };
+	//GLfloat light_position[] = { 1.0, 1.0, 1.0, 0.0 };
+	//GLfloat white_light[] = { 1.0, 1.0, 1.0, 1.0 };
+	//GLfloat lmodel_ambient[] = { 0.1, 0.1, 0.1, 1.0 };
+
+	//glClearColor(0.0, 0.0, 0.0, 0.0);
+
+
+	//glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	//glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+
+	//glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+	//glLightfv(GL_LIGHT0, GL_DIFFUSE, light_position);
+
+	//glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
+
 	glShadeModel(GL_SMOOTH);
+	glEnable(GL_LIGHT0);
+
+	if (settings.renderOptions[RENDER_LIGHTING])
+		glEnable(GL_LIGHTING);
+	else
+		glDisable(GL_LIGHTING);
+
+
+    glEnable(GL_CULL_FACE);
 
 	glPolygonMode(
 		GL_FRONT_AND_BACK, 
@@ -79,11 +105,13 @@ void init()
 	glewInit();
 	
 	glClearColor(0, 0, 0, 0);
+
 	glEnable(GL_DEPTH_TEST);
 	
 	memset(&settings, 0, sizeof(AppSettings));
 
 	settings.x = settings.y = settings.z = 0;
+	settings.renderOptions[RENDER_LIGHTING] = DEFAULT_LIGHTING;
 	settings.renderOptions[RENDER_WIREFRAME] = DEFAULT_WIREFRAME;
 	settings.renderOptions[RENDER_OSD] = DEFAULT_OSD;
 	settings.tesselation = DEFAULT_TESSELATION;
@@ -130,7 +158,7 @@ void drawOSD()
 	/* Backup previous "enable" state */
 	glPushAttrib(GL_ENABLE_BIT);
 	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_LIGHTING);
+	//glDisable(GL_LIGHTING);
 
 	/* Create a temporary orthographic projection, matching
 	 * window dimensions, and push it onto the stack */
@@ -166,14 +194,6 @@ void drawOSD()
 
 void display()
 {
-	static float noAmbient[] = {0.0f, 0.0f, 0.0f, 1.0f};
-	static float whiteDiffuse[] = {0.8f, 0.8f, 0.8f, 1.0f};
-	static float whiteSpecular[] = {1.0f, 1.0f, 1.0f};
-
-	static float materialDiffuse[] = {0.7f, 0.7f, 0.7f, 1.0f}; /* Brighter as surface faces light */
-	static float materialSpecular[] = {0.3f, 0.3f, 0.3f, 1.0f}; /* Highlight, direct reflection from light */
-	static float materialShininess = 64.0f; /* 1 to 128, higher gives sharper highlight */
-	
 	if (NULL == receiver)
 		receiver = new KinectReceiver();
 
@@ -182,7 +202,7 @@ void display()
 
 	/* Clear the colour and depth buffer */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	glDisable(GL_COLOR_MATERIAL);
 
 	glLoadIdentity();
 
@@ -197,40 +217,6 @@ void display()
 
 	/* Draw scene */
 	setRenderOptions();
-
-	/* disable all lights */
-	for (int i = 0; i < 8; i++)
-		glDisable(GL_LIGHT0 + i);
-
-	/* first light is positional, placed at 3.0 along the Z axis */
-	float lightPosition[] = {0.0f, 0.0f, 3.0f, 1.0f};
-
-	/* enable requested lights */
-	if (settings.lights > 0) {
-
-        /* create and enable first light */
-		glLightfv(GL_LIGHT0, GL_AMBIENT, noAmbient);
-		glLightfv(GL_LIGHT0, GL_DIFFUSE, whiteDiffuse);
-
-		glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
-		glEnable(GL_LIGHT0);
-
-		/* make all other lights directional */
-		lightPosition[3] = 0.0f;
-    }
-
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, materialDiffuse);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpecular);
-	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, materialShininess);
-
-	/* rotation rate (rotations per ms) */
-	const float rate = 0.0005;
-
-	/* object grid spread factor */
-	const float spread = 2.1;
-	/* object grid offset */
-	float offset = (settings.duplication - 1)*spread - (settings.duplication - 1)*spread / 2;
-
 
     /* prepare to draw */
     glPushMatrix();
@@ -312,6 +298,8 @@ void keyDown(int key) {
 		settings.running = !settings.running;
 	else if (key == SDLK_f)
 		printf("Frame rate: %f\n", currentFramerate);
+	else if (key == SDLK_l)  
+		settings.renderOptions[RENDER_LIGHTING] = !settings.renderOptions[RENDER_LIGHTING];
 	else if (key == SDLK_m) { 
 		settings.selectedMethod = (RenderMethod)((settings.selectedMethod + 1) % NUM_RENDER_METHOD);
 		deleteMethod = true;

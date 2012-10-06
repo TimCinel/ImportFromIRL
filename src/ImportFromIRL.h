@@ -9,6 +9,7 @@ typedef enum t_RenderMethod {
 
 typedef enum t_RenderOptions {
 	RENDER_WIREFRAME,
+	RENDER_LIGHTING,
 	RENDER_OSD,
 	NUM_RENDER_OPTIONS /* MUST BE LAST! */
 } RenderOptions;
@@ -16,7 +17,6 @@ typedef enum t_RenderOptions {
 typedef struct t_AppSettings {
 	unsigned int tesselation;
 	unsigned int duplication;
-	unsigned int lights;
 	
 	float x, y, z;
 

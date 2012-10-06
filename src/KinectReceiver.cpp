@@ -73,7 +73,7 @@ void KinectReceiver::addPoint(unsigned short depth) {
     static const float high_angle = (43 / 360.0f) * 2.0f*pi;
     static const float wide_offset = -wide_angle / 2;
     static const float high_offset = -high_angle / 2;
-    static const unsigned short max_depth = 0x4000;		
+    static const unsigned short max_depth = 0x1000;		
 
 	point->x = l_max * sin(wide_offset + ((float)x / this->width) * wide_angle);
 	point->y = l_max * sin(high_offset + ((float)y / this->height) * high_angle);
@@ -112,21 +112,37 @@ void KinectReceiver::specifyTriangle(RenderModel *callingModel,
 {
 
 #define THRESHOLD 0.01
+
+	vec3f *p1, *p2, *p3;
+	p1 = &(this->depth[y1][x1]);
+	p2 = &(this->depth[y2][x2]);
+	p3 = &(this->depth[y3][x3]);
+
 	if (
 	/*
 		*/
-		abs(this->depth[y1][x1].z - this->depth[y2][x2].z) > THRESHOLD ||
-		abs(this->depth[y2][x2].z - this->depth[y3][x3].z) > THRESHOLD ||
-		abs(this->depth[y1][x1].z - this->depth[y3][x3].z) > THRESHOLD ||
-		this->depth[y1][x1].z == 0 ||
-		this->depth[y2][x2].z == 0 ||
-		this->depth[y3][x3].z == 0
+		abs(p1->z - p2->z) > THRESHOLD ||
+		abs(p2->z - p3->z) > THRESHOLD ||
+		abs(p3->z - p1->z) > THRESHOLD ||
+		p1->z == 0 || p2->z == 0 || p3->z == 0
 	)
-		//the triangle's too big
+		//the triangle's a PITA
 		return;
 
-	callingModel->specifyPoint(&(this->depth[y1][x1]), NULL);
-	callingModel->specifyPoint(&(this->depth[y2][x2]), NULL);
-	callingModel->specifyPoint(&(this->depth[y3][x3]), NULL);
+	//calculate surface normal
+	vec3f normal;
+	normal.x = ((p1->y - p2->y) * (p2->z - p3->z) - (p1->z - p2->z) * (p2->y - p3->y));
+	normal.y = ((p1->z - p2->z) * (p2->x - p3->x) - (p1->x - p2->x) * (p2->z - p3->z));
+	normal.z = ((p1->x - p2->x) * (p2->y - p3->y) - (p1->y - p2->y) * (p2->x - p3->x));
+
+	float magnitude = sqrt(pow(normal.x, 2) + pow(normal.y, 2) + pow(normal.z, 2));
+
+	normal.x /= magnitude;
+	normal.y /= magnitude;
+	normal.z /= magnitude;
+
+	callingModel->specifyPoint(p1, &normal);
+	callingModel->specifyPoint(p2, &normal);
+	callingModel->specifyPoint(p3, &normal);
 }
 

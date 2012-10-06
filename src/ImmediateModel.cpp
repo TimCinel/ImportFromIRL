@@ -34,7 +34,7 @@ void ImmediateModel::draw() {
 void ImmediateModel::specifyPoint(vec3f *vertex, vec3f *normal) {
 
 	/* immediate */
-	//glNormal3f(normal->x, normal->y, normal->z);
+	glNormal3f(normal->x, normal->y, normal->z);
 	glVertex3f(vertex->x, vertex->y, vertex->z);
 
 }
