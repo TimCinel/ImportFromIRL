@@ -1,5 +1,4 @@
 #include "ImmediateModel.h"
-
 #include "GeometryGenerator.h"
 
 #if defined(_WIN32)

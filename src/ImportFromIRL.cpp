@@ -1,8 +1,11 @@
 #include "ImportFromIRL.h"
 
-#include <math.h>
-#include <string.h>
-#include <stdio.h>
+#include <cmath>
+#include <cstring>
+#include <cstdio>
+
+#include <string>
+#include <iostream>
 
 #include <GL/glew.h>
 #include <windows.h>
@@ -27,6 +30,8 @@
 
 #include "Camera.h"
 #include "vec3f.h"
+
+using namespace std;
 
 
 /* Setting  Defaults */
@@ -280,12 +285,53 @@ void mouseMove(int x, int y) {
 	lastMouseY = y;
 }
 
-void keyDown(int key) {
-bool deleteMethod = false, deleteShape = false;
+void processCommand(char *command) {
+	string cmd = string(command);
 
-	if (key == SDLK_c)
+	//strip trailing whitespace
+	while(cmd[cmd.length() - 1] == '\n' || cmd[cmd.length() - 1] == '\r')
+		cmd.erase(cmd.length() - 1, 1);
+
+	int spacePos = cmd.find_first_of(' ');
+
+	string directive, arguments;
+	if (spacePos != cmd.npos) {
+		directive = cmd.substr(0, spacePos);
+		arguments = cmd.substr(spacePos + 1, cmd.length() - spacePos - 1);
+	} else {
+		directive = string(cmd);
+	}
+
+	printf("cmd: %s\n", command);
+	cout << "directive: \"" << directive << "\"\n";
+	cout << "arguments: \"" << arguments << "\"\n";
+
+	if ("quit" == directive) {
 		quit();
-	else if (key == SDLK_w)
+	} else if ("addplane" == directive) {
+
+	}
+}
+
+void keyDown(int key) {
+	bool deleteMethod = false, deleteShape = false;
+	static const unsigned int MAX_COMMAND_LEN = 64;
+	
+
+	char command[MAX_COMMAND_LEN];
+
+	if (key == SDLK_q)
+		quit();
+	else if (key == SDLK_c) {
+		//read command from command line
+		cout << "Enter a command (Press ? for help)\n";
+
+ 		if (NULL != fgets((char *)command, MAX_COMMAND_LEN - 1, stdin))
+			processCommand(command);
+		else
+			fputs("Failed to read command.\n", stdout);
+
+	} else if (key == SDLK_w)
 		settings.z += 0.05;
 	else if (key == SDLK_a)
 		settings.x -= 0.05;

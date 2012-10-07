@@ -54,7 +54,7 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>kernel32.lib;user32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;SDL.lib;SDLmain.lib;glut32.lib;opengl32.lib;glu32.lib;glew32.lib;Kinect10.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>
@@ -85,6 +85,7 @@
   <ItemGroup>
     <ClInclude Include="..\src\AbstractKinectInterface.h" />
     <ClInclude Include="..\src\Camera.h" />
+    <ClInclude Include="..\src\CullPlane.h" />
     <ClInclude Include="..\src\DummyKinectInterface.h" />
     <ClInclude Include="..\src\GeometryGenerator.h" />
     <ClInclude Include="..\src\ImmediateModel.h" />
