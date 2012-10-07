@@ -56,5 +56,6 @@ bool DummyKinectInterface::processDepth(KinectReceiver *kr) {
 		kr->addPoint(depthData[i]);
 
 	delete [] depthData;
+	return true;
 
 }
