@@ -163,7 +163,7 @@ void drawOSD()
 	/* Backup previous "enable" state */
 	glPushAttrib(GL_ENABLE_BIT);
 	glDisable(GL_DEPTH_TEST);
-	//glDisable(GL_LIGHTING);
+	glDisable(GL_LIGHTING);
 
 	/* Create a temporary orthographic projection, matching
 	 * window dimensions, and push it onto the stack */

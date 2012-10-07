@@ -1,10 +1,13 @@
 #include "KinectReceiver.h"
 
 #include "RenderModel.h"
+#include "GeometryOperations.h"
 
 #include <cstdio>
-#include <cmath>
 #include <unordered_map>
+#define _USE_MATH_DEFINES
+#include <cmath>
+
 
 KinectReceiver::KinectReceiver() :
 	verts(NULL),
@@ -203,6 +206,31 @@ void KinectReceiver::specifyTriangle(int y0, int x0,
 
 void KinectReceiver::drawTriangle(RenderModel *callingModel, int triangleNum)  {
 	triangleNum *= 3;
+	vec3f point = this->verts[this->tris[triangleNum]];
+
+	static vec3f planePoint = vec3f(-0.0, 0.0, 0.0);
+	static vec3f planeNorm = vec3f(-1.0, 0.0, 0.0);
+	static vec3f rotate = vec3f(0.0, 0.0, M_PI / 4);
+	static bool rotated = false;
+	static float d;
+
+	if (!rotated) {
+		planeNorm = GeometryOperations::rotate3D(&planeNorm, &rotate);
+		rotated = true;
+
+		d = -(
+			planePoint.x * planeNorm.x +
+			planePoint.y * planeNorm.y +
+			planePoint.z * planeNorm.z
+		);
+
+	}
+
+
+	if (point.x * planeNorm.x + point.y * planeNorm.y + point.z * planeNorm.z + d > 0)
+		return;
+
+
 	for (int i = 0; i < 3; i++)
 		callingModel->specifyPoint(
 			&(this->verts[this->tris[triangleNum + i]]), 

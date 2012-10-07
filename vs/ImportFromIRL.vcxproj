@@ -88,6 +88,7 @@
     <ClInclude Include="..\src\CullPlane.h" />
     <ClInclude Include="..\src\DummyKinectInterface.h" />
     <ClInclude Include="..\src\GeometryGenerator.h" />
+    <ClInclude Include="..\src\GeometryOperations.h" />
     <ClInclude Include="..\src\ImmediateModel.h" />
     <ClInclude Include="..\src\ImportFromIRL.h" />
     <ClInclude Include="..\src\WindowsKinectInterface.h" />
@@ -101,6 +102,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\DummyKinectInterface.cpp" />
+    <ClCompile Include="..\src\GeometryOperations.cpp" />
     <ClCompile Include="..\src\ImmediateModel.cpp" />
     <ClCompile Include="..\src\ImportFromIRL.cpp" />
     <ClCompile Include="..\src\WindowsKinectInterface.cpp" />
