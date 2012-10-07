@@ -7,6 +7,13 @@
 #include <stdio.h>
 
 class DummyKinectInterface : public AbstractKinectInterface {
+private:
+	char *dumpFile;
+	FILE *dumpFP;
+
+	int width;
+	int height;
+
 public:
     DummyKinectInterface(int width, int height, char *dumpFile);
     ~DummyKinectInterface();
@@ -15,12 +22,8 @@ public:
     virtual bool connectToKinect();
 	virtual bool processDepth(KinectReceiver *kr);
 
-private:
-	char *dumpFile;
-	FILE *dumpFP;
-
-	int width;
-	int height;
+	virtual bool startDump(char *filename) { return false; }
+	virtual bool endDump() {return false; }
 };
 
 #endif

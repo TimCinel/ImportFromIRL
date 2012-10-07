@@ -1,8 +1,5 @@
 #include "stdafx.h"
 #include "WindowsKinectInterface.h"
-#include <stdio.h>
-
-#define KINECT_DUMP
 
 WindowsKinectInterface::WindowsKinectInterface() :
     kinectSensor(NULL),
@@ -10,7 +7,7 @@ WindowsKinectInterface::WindowsKinectInterface() :
     kinectNextFrameEvent(NULL),
     isConnected(false)
 {
-    this->depthData = new USHORT[this->depthWidth * this->depthHeight];
+    this->depthData = new USHORT[DEPTH_WIDTH * DEPTH_HEIGHT];
 }
 
 WindowsKinectInterface::~WindowsKinectInterface() {
@@ -71,7 +68,7 @@ bool WindowsKinectInterface::connectToKinect() {
 			//open image stream and start receiving frames
             hr = this->kinectSensor->NuiImageStreamOpen(
                 NUI_IMAGE_TYPE_DEPTH,
-                (this->depthWidth == 640 ? NUI_IMAGE_RESOLUTION_640x480 : NUI_IMAGE_RESOLUTION_320x240),
+                (DEPTH_WIDTH == 640 ? NUI_IMAGE_RESOLUTION_640x480 : NUI_IMAGE_RESOLUTION_320x240),
                 0,
                 2,
                 this->kinectNextFrameEvent,
@@ -110,10 +107,10 @@ bool WindowsKinectInterface::processDepth(KinectReceiver *kr) {
         USHORT *pixelData = this->depthData;
 
         const USHORT *depthBuffer = (const USHORT *)LockedRect.pBits;
-        const USHORT *depthBufferEnd = depthBuffer + (this->depthWidth * this->depthHeight);
+        const USHORT *depthBufferEnd = depthBuffer + (DEPTH_WIDTH * DEPTH_HEIGHT);
 
 		//reset receiver
-		kr->initialiseImage(this->depthWidth, this->depthHeight);
+		kr->initialiseImage(DEPTH_WIDTH, DEPTH_HEIGHT);
 
         while (depthBuffer < depthBufferEnd) {
 			kr->addPoint(NuiDepthPixelToDepth(*depthBuffer));
@@ -130,22 +127,30 @@ bool WindowsKinectInterface::processDepth(KinectReceiver *kr) {
     //release the frame
     this->kinectSensor->NuiImageStreamReleaseFrame(this->kinectDepthStreamHandle, &imageFrame);
 
-#ifdef KINECT_DUMP
-	//dump the depth data to file
+	if (this->dumping) {
+		//dump the depth data to file
+		FILE *dump;
 
-    FILE *dump;
-    static int dump_num = 0;
-    char dump_name[32];
+		//ab for write binary. just w doesn't work in Vindowze...
+		dump = fopen(this->dumpFile, "ab");
 
-	//update dump file name
-	sprintf((char *)dump_name, "dump_%04d.dat", dump_num++);
+		//pffffppfpppptthpfp (that's the sound of dumping)
+		fwrite(this->depthData, sizeof(unsigned short), DEPTH_WIDTH * DEPTH_HEIGHT, dump);
 
-	//wb for write binary. just w doesn't work...
-	dump = fopen((char *)dump_name, "wb");
-	fwrite(this->depthData, sizeof(unsigned short), this->depthWidth * this->depthHeight, dump);
-	fclose(dump);
+		//close says-a-me
+		fclose(dump);
+	}
 
-#endif
+	return true;
+}
 
+bool WindowsKinectInterface::startDump(char *filename) {
+	this->dumping = true;
+	strncpy(this->dumpFile, filename, DUMP_FILE_LEN);
+	return true;
+}
+
+bool WindowsKinectInterface::endDump() {
+	this->dumping = false;
 	return true;
 }

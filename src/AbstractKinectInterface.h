@@ -7,6 +7,10 @@ class AbstractKinectInterface {
 public:
 	virtual bool connectToKinect() = 0;
 	virtual bool processDepth(KinectReceiver *kr) = 0;
+
+	//can simply return false if not allowed
+	virtual bool startDump(char *filename) = 0;
+	virtual bool endDump() = 0;
 };
 
 #endif

@@ -4,7 +4,9 @@
 #pragma once
 
 #include "GeometryGenerator.h"
-#include "vec3f.h"
+#include "CullPlane.h"
+
+#include <vector>
 
 class KinectReceiver : public GeometryGenerator {
 private:
@@ -13,6 +15,8 @@ private:
 	int *vertTriMap;
 	unsigned int *tris;
 	vec3f *triNorms;
+
+	std::vector<CullPlane> planes;
 
 	int width, height, triCount;
 	int pos;
@@ -23,6 +27,9 @@ public:
 
 	void initialiseImage(int width, int height);
 	void resetPointer();
+
+	void addPlane(CullPlane plane);
+	std::vector<CullPlane> getPlanes();
 
 	void addPoint(unsigned short depth);
 

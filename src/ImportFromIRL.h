@@ -14,6 +14,18 @@ typedef enum t_RenderOptions {
 	NUM_RENDER_OPTIONS /* MUST BE LAST! */
 } RenderOptions;
 
+typedef enum t_ApplicationStates {
+	STATE_WORKSPACE,
+	STATE_WORKSPACE_ROTATE_FRAME,
+	STATE_WORKSPACE_PAN_FRAME,
+	STATE_CAPTURE,
+	STATE_CAPTURE_DUMP,
+	STATE_EDIT,
+	STATE_EDIT_PLANE_ROTATE,
+	STATE_EDIT__PLANE_PAN,
+	STATE_INVALID
+} ApplicationStates;
+
 typedef struct t_AppSettings {
 	unsigned int tesselation;
 	unsigned int duplication;
@@ -21,6 +33,7 @@ typedef struct t_AppSettings {
 	float x, y, z;
 
 	RenderMethod selectedMethod;
+	ApplicationStates state;
 
 	bool renderOptions[NUM_RENDER_OPTIONS];
 	bool running;

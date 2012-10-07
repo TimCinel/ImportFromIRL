@@ -6,20 +6,9 @@
 #include "AbstractKinectInterface.h"
 #include "NuiApi.h"
 
+#include <cstdio>
+
 class WindowsKinectInterface : public AbstractKinectInterface {
-public:
-
-    WindowsKinectInterface();
-    ~WindowsKinectInterface();
-
-	/* overriding abstract functions */
-    virtual bool connectToKinect();
-	virtual bool processDepth(KinectReceiver *kr);
-
-    USHORT *getDepthData() { return this->depthData; };
-    int getDepthWidth() { return this->depthWidth; };
-    int getDepthHeight() { return this->depthHeight; };
-
 private:
     INuiSensor *kinectSensor;
 
@@ -28,10 +17,30 @@ private:
 
     bool        isConnected;
 
+    bool        dumping;
+	char		dumpFile[128];
+
     USHORT      *depthData;
 
-    static const int depthWidth = 320;
-    static const int depthHeight = 240;
+    static const int DEPTH_WIDTH = 320;
+    static const int DEPTH_HEIGHT = 240;
+    static const int DUMP_FILE_LEN = 240;
+
+
+public:
+    WindowsKinectInterface();
+    ~WindowsKinectInterface();
+
+	/* overriding abstract functions */
+    virtual bool connectToKinect();
+	virtual bool processDepth(KinectReceiver *kr);
+
+	virtual bool startDump(char *filename);
+	virtual bool endDump();
+
+    USHORT *getDepthData() { return this->depthData; };
+    int getDepthWidth() { return DEPTH_WIDTH; };
+    int getDepthHeight() { return DEPTH_HEIGHT; };
 };
 
 #endif

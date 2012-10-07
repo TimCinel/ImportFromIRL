@@ -23,13 +23,14 @@
 
 #include "RenderModel.h"
 #include "ImmediateModel.h"
-#include "VertexBufferObjectModel.h"
-
 #include "GeometryGenerator.h"
 #include "KinectReceiver.h"
+#include "CullPlane.h"
 
 #include "Camera.h"
 #include "vec3f.h"
+
+#include <vector>
 
 using namespace std;
 
@@ -52,30 +53,11 @@ int lastMouseY = 0;
 unsigned long animationClock = 0;
 
 AbstractKinectInterface *kinect = NULL;
-KinectReceiver *receiver = NULL;
+KinectReceiver *captureReceiver = NULL;
 RenderModel *method = NULL;
 
 
-/* Update opengl state to match flags in renderOptions */
-void setRenderOptions()
-{
-
-	//GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
-	//GLfloat mat_shininess[] = { 50.0 };
-	//GLfloat light_position[] = { 1.0, 1.0, 1.0, 0.0 };
-	//GLfloat white_light[] = { 1.0, 1.0, 1.0, 1.0 };
-	//GLfloat lmodel_ambient[] = { 0.1, 0.1, 0.1, 1.0 };
-
-	//glClearColor(0.0, 0.0, 0.0, 0.0);
-
-
-	//glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
-	//glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
-
-	//glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-	//glLightfv(GL_LIGHT0, GL_DIFFUSE, light_position);
-
-	//glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
+void setRenderOptions() {
 
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_LIGHT0);
@@ -86,7 +68,7 @@ void setRenderOptions()
 		glDisable(GL_LIGHTING);
 
 
-    glEnable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
 
 	glPolygonMode(
 		GL_FRONT_AND_BACK, 
@@ -94,18 +76,13 @@ void setRenderOptions()
 		);
 }
 
-/* Called once at program start */
-void init()
-{
+void init() {
 
 #ifndef _WIN32
 	int argc = 0;  /* fake glutInit args */
 	char *argv = (char *)"";
 	glutInit(&argc, &argv);
 #endif
-
-	kinect = new DummyKinectInterface(320, 240, "../data/dump.dat");
-    kinect->connectToKinect();
 
 	glewInit();
 	
@@ -129,9 +106,7 @@ void init()
 
 }
 
-/* Called once at start and again on window resize */
-void reshape(int width, int height)
-{
+void reshape(int width, int height) {
 	windowWidth = width;
 	windowHeight = height;
 	
@@ -155,8 +130,7 @@ void reshape(int width, int height)
 }
 
 
-void drawOSD()
-{
+void drawOSD() {
 	char *bufp;
 	char buffer[32];
 	
@@ -197,50 +171,59 @@ void drawOSD()
 	glPopAttrib();
 }
 
-void display()
-{
-	if (NULL == receiver)
-		receiver = new KinectReceiver();
-
-	if (NULL == method)
-		method = new ImmediateModel(receiver, 0, GL_TRIANGLES);
-
-	/* Clear the colour and depth buffer */
+void display() {
+	//clear the colour and depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_COLOR_MATERIAL);
 
 	glLoadIdentity();
 
-	/* Camera transformations */
+	//camera transformations
 	glTranslatef(0.0f, 0.0f, -camera.zoom);
 	glRotatef(camera.rotX, 1.0f, 0.0f, 0.0f);
 	glRotatef(camera.rotY, 0.0f, 1.0f, 0.0f);
 	
-
-	/* motion */
-	glTranslatef(settings.x, settings.y, settings.z);
-
-	/* Draw scene */
 	setRenderOptions();
 
-    /* prepare to draw */
+    //prepare to draw
     glPushMatrix();
 
+	switch (settings.state) {
+		case STATE_WORKSPACE:
+			//iterate through and draw the frames
 
-	if (settings.running) {
-		/* get new depth data */
-		kinect->processDepth(receiver);
+			break;
+
+		case STATE_CAPTURE:
+			//just display from the device or a dump
+			if (NULL == captureReceiver)
+				captureReceiver = new KinectReceiver();
+
+			if (NULL == method)
+				method = new ImmediateModel(captureReceiver, 0, GL_TRIANGLES);
+
+			//pan object
+			glTranslatef(settings.x, settings.y, settings.z);
+
+			if (settings.running && NULL != kinect)
+				//get new depth data
+				kinect->processDepth(captureReceiver);
+
+			if (NULL != method)
+				//draw!
+				method->draw();
+
+			break;
+		case STATE_EDIT:
+			break;
+		default:
+			break;
 	}
-
-	/* draw! */
-    method->draw();
 
     glPopMatrix();
 
 	if (settings.renderOptions[RENDER_OSD])
 		drawOSD();
-
-
 }
 
 /* Called continuously. dt is time between frames in seconds */
@@ -272,24 +255,100 @@ void mouseDown(int button, int state, int x, int y) {
 void mouseMove(int x, int y) {
 	int dx = x - lastMouseX;
 	int dy = y - lastMouseY;
-	if (camera.rotating)
-	{
-		camera.rotY += dx * camera.sensitivity;
-		camera.rotX += dy * camera.sensitivity;
-	}
-	if (camera.zooming)
-	{
-		camera.zoom -= dy * camera.zoom * camera.sensitivity * 0.03f;
-	}
+
+	switch (settings.state)  {
+		case STATE_CAPTURE:
+		case STATE_WORKSPACE:
+		case STATE_EDIT:
+			if (camera.rotating) {
+				camera.rotY += dx * camera.sensitivity;
+				camera.rotX += dy * camera.sensitivity;
+			} 
+			if (camera.zooming) {
+				camera.zoom -= dy * camera.zoom * camera.sensitivity * 0.03f;
+			}
+		default:
+			break;
+	};
+
 	lastMouseX = x;
 	lastMouseY = y;
+}
+
+void changeMode(ApplicationStates newState) {
+	if (settings.state == newState)
+		return;
+
+	if (STATE_CAPTURE_DUMP == settings.state) {
+		cout << "Can't change mode - currently dumping.\n";
+	}
+
+	if (NULL != method) {
+		delete method;
+		method = NULL;
+	}
+
+	settings.state = newState;
+
+	cout << "Application changed state: " << newState << "\n";
+}
+
+void openSource(string arguments) {
+
+	//out with the old
+	if (NULL != kinect)
+		delete kinect;
+	kinect = NULL;
+
+	if (NULL != captureReceiver)
+		delete captureReceiver;
+	captureReceiver = NULL;
+
+	if (NULL != method)
+		delete method;
+	method = NULL;
+
+	//in with the new
+	if ("none" == arguments) {
+		//no capture
+
+		cout << "No source selected.\n";
+
+	} else if ("kinect" == arguments) {
+		//capture from actual kinect
+
+		kinect = new WindowsKinectInterface();
+
+		if (kinect->connectToKinect())  {
+			cout << "Using Kinect Sensor as source.\n";
+		} else {
+			cout << "Failed to connect to Kinect Sensor\n";
+			delete kinect;
+			kinect = NULL;
+		}
+	} else {
+		//capture from dump file
+
+		kinect = new DummyKinectInterface(320, 240, (char *)arguments.c_str());
+
+		if (kinect->connectToKinect()) {
+			cout << "Using dump file \"" << arguments << "\" as source.\n";
+		} else {
+			cout << "Failed to load dump file\n";
+			delete kinect;
+			kinect = NULL;
+		}
+	}
 }
 
 void processCommand(char *command) {
 	string cmd = string(command);
 
+	if ('\0' == command[0])
+		return;
+
 	//strip trailing whitespace
-	while(cmd[cmd.length() - 1] == '\n' || cmd[cmd.length() - 1] == '\r')
+	while(cmd.length() > 1 && cmd[cmd.length() - 1] == '\n' || cmd[cmd.length() - 1] == '\r')
 		cmd.erase(cmd.length() - 1, 1);
 
 	int spacePos = cmd.find_first_of(' ');
@@ -306,11 +365,39 @@ void processCommand(char *command) {
 	cout << "directive: \"" << directive << "\"\n";
 	cout << "arguments: \"" << arguments << "\"\n";
 
-	if ("quit" == directive) {
+	if ("quit" == directive)
 		quit();
-	} else if ("addplane" == directive) {
+	else if ("mode" == directive)
+		if ("capture" == arguments)
+			changeMode(STATE_CAPTURE);
+		else if("edit" == arguments) 
+			changeMode(STATE_EDIT);
+		else if ("workspace" == arguments) 
+			changeMode(STATE_WORKSPACE);
+		else
+			cout << "Invalid mode \"" + arguments + "\"" << ".\n";
 
+	if (STATE_CAPTURE == settings.state) {
+		if ("source" == directive) {
+			openSource(arguments);
+		} else if ("dump" == directive) {
+			if (NULL != kinect && kinect->startDump((char *)arguments.c_str())) {
+				cout << "Started dump to \"" << arguments << "\".\n";
+				settings.state = STATE_CAPTURE_DUMP;
+			} else {
+				cout << "Failed to start dump to \"" << arguments << "\".\n";
+			}
+		}
+	} else if (STATE_CAPTURE_DUMP == settings.state) {
+		//any input is taken as "stop dump" command
+		if (NULL != kinect && kinect->endDump())
+			cout << "Stopped dumping.\n";
+		else
+			cout << "Dump stop failed. Might be worth restarting...\n";
+
+		settings.state = STATE_CAPTURE;
 	}
+
 }
 
 void keyDown(int key) {
@@ -366,7 +453,7 @@ void cleanup() {
     if (NULL != kinect) 
         delete kinect;
 
-	if (NULL != receiver)
-		delete receiver;
+	if (NULL != captureReceiver)
+		delete captureReceiver;
 
 }
