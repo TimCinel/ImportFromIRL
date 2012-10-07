@@ -10,6 +10,10 @@
 
 class WindowsKinectInterface : public AbstractKinectInterface {
 private:
+    static const int DEPTH_WIDTH = 320;
+    static const int DEPTH_HEIGHT = 240;
+    static const int DUMP_FILE_LEN = 240;
+
     INuiSensor *kinectSensor;
 
     HANDLE      kinectDepthStreamHandle;
@@ -18,13 +22,10 @@ private:
     bool        isConnected;
 
     bool        dumping;
-	char		dumpFile[128];
+	char		dumpFile[DUMP_FILE_LEN];
+    FILE        *dumpFP;
 
     USHORT      *depthData;
-
-    static const int DEPTH_WIDTH = 320;
-    static const int DEPTH_HEIGHT = 240;
-    static const int DUMP_FILE_LEN = 240;
 
 
 public:

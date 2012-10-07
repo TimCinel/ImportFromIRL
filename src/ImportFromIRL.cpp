@@ -195,6 +195,7 @@ void display() {
 			break;
 
 		case STATE_CAPTURE:
+		case STATE_CAPTURE_DUMP:
 			//just display from the device or a dump
 			if (NULL == captureReceiver)
 				captureReceiver = new KinectReceiver();
@@ -450,10 +451,14 @@ void keyUp(int key) {
 }
 
 void cleanup() {
-    if (NULL != kinect) 
+    if (NULL != kinect) {
         delete kinect;
+        kinect = NULL;
+    }
 
-	if (NULL != captureReceiver)
+	if (NULL != captureReceiver) {
 		delete captureReceiver;
+        captureReceiver = NULL;
+    }
 
 }

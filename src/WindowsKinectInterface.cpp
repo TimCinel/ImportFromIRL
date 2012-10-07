@@ -5,9 +5,13 @@ WindowsKinectInterface::WindowsKinectInterface() :
     kinectSensor(NULL),
     kinectDepthStreamHandle(NULL),
     kinectNextFrameEvent(NULL),
-    isConnected(false)
+    isConnected(false),
+    dumping(false),
+    dumpFP(NULL)
 {
-    this->depthData = new USHORT[DEPTH_WIDTH * DEPTH_HEIGHT];
+    this->depthData = new unsigned short[DEPTH_WIDTH * DEPTH_HEIGHT];
+    memset(this->depthData, 0, sizeof(unsigned short)*DEPTH_WIDTH*DEPTH_HEIGHT);
+    memset(this->dumpFile, 0, DUMP_FILE_LEN);
 }
 
 WindowsKinectInterface::~WindowsKinectInterface() {
@@ -21,7 +25,8 @@ WindowsKinectInterface::~WindowsKinectInterface() {
         CloseHandle(this->kinectNextFrameEvent);
 
     //free depth memory
-    delete[] this->depthData;
+    if (NULL != this->depthData)
+        delete[] this->depthData;
 
 }
 
@@ -77,9 +82,9 @@ bool WindowsKinectInterface::connectToKinect() {
     }
 
     if (NULL == this->kinectSensor || FAILED(hr))
-        return true;
+        return false;
 
-    return false;
+    return true;
 }
 
 bool WindowsKinectInterface::processDepth(KinectReceiver *kr) {
@@ -102,55 +107,4 @@ bool WindowsKinectInterface::processDepth(KinectReceiver *kr) {
     if (NULL == this->depthData)
         return false;
 
-    // Make sure we've received valid data
-    if (LockedRect.Pitch != 0) {
-        USHORT *pixelData = this->depthData;
-
-        const USHORT *depthBuffer = (const USHORT *)LockedRect.pBits;
-        const USHORT *depthBufferEnd = depthBuffer + (DEPTH_WIDTH * DEPTH_HEIGHT);
-
-		//reset receiver
-		kr->initialiseImage(DEPTH_WIDTH, DEPTH_HEIGHT);
-
-        while (depthBuffer < depthBufferEnd) {
-			kr->addPoint(NuiDepthPixelToDepth(*depthBuffer));
-            //*pixelData = NuiDepthPixelToDepth(*depthBuffer);
-
-            pixelData++;
-            depthBuffer++;
-        }
-    }
-
-    //unlock the frame
-    pTexture->UnlockRect(0);
-
-    //release the frame
-    this->kinectSensor->NuiImageStreamReleaseFrame(this->kinectDepthStreamHandle, &imageFrame);
-
-	if (this->dumping) {
-		//dump the depth data to file
-		FILE *dump;
-
-		//ab for write binary. just w doesn't work in Vindowze...
-		dump = fopen(this->dumpFile, "ab");
-
-		//pffffppfpppptthpfp (that's the sound of dumping)
-		fwrite(this->depthData, sizeof(unsigned short), DEPTH_WIDTH * DEPTH_HEIGHT, dump);
-
-		//close says-a-me
-		fclose(dump);
-	}
-
-	return true;
-}
-
-bool WindowsKinectInterface::startDump(char *filename) {
-	this->dumping = true;
-	strncpy(this->dumpFile, filename, DUMP_FILE_LEN);
-	return true;
-}
-
-bool WindowsKinectInterface::endDump() {
-	this->dumping = false;
-	return true;
-}
+    // Make sure we've recÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
