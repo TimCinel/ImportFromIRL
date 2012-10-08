@@ -5,11 +5,14 @@
 using namespace Eigen;
 using namespace std;
 
-vec3f GeometryOperations::rotate3D(vec3f *point, vec3f *rotation) {
-	float x = rotation->x, y = rotation->y, z = rotation->z;
+vec3f GeometryOperations::rotate3D(vec3f &point, vec3f &rotation) {
+	float x = rotation.x, y = rotation.y, z = rotation.z;
 
-	Vector3f v = Vector3f(point->x, point->y, point->z);
+	Vector3f v = Vector3f(point.x, point.y, point.z);
 	Matrix3f r = Matrix3f();
+
+	//3D rotation matrix
+	//http://en.wikipedia.org/wiki/Rotation_matrix
 
 	r <<	cos(y)*cos(z),	-cos(x)*sin(z)+sin(x)*sin(y)*cos(z),	sin(x)*sin(z)+cos(x)*sin(y)*cos(z),
 			cos(y)*sin(z),	cos(x)*cos(z)+sin(x)*sin(y)*sin(z),		-sin(x)*cos(z)+cos(x)*sin(y)*sin(z),

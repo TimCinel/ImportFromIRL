@@ -196,29 +196,10 @@ void KinectReceiver::drawTriangle(RenderModel *callingModel, int triangleNum)  {
 	triangleNum *= 3;
 	vec3f point = this->verts[this->tris[triangleNum]];
 
-#if 0
-	static vec3f planePoint = vec3f(-0.0, 0.0, 0.0);
-	static vec3f planeNorm = vec3f(-1.0, 0.0, 0.0);
-	static vec3f rotate = vec3f(0.0, 0.0, M_PI / 4);
-	static bool rotated = false;
-	static float d;
-
-	if (!rotated) {
-		planeNorm = GeometryOperations::rotate3D(&planeNorm, &rotate);
-		rotated = true;
-
-		d = -(
-			planePoint.x * planeNorm.x +
-			planePoint.y * planeNorm.y +
-			planePoint.z * planeNorm.z
-		);
-
-	}
-
-	if (point.x * planeNorm.x + point.y * planeNorm.y + point.z * planeNorm.z + d > 0)
-		return;
-#endif
-
+	//cull
+	for (int i = 0; i < this->planes.size(); i++)
+		if (this->planes[i].cullPoint(point))
+			return;
 
 	for (int i = 0; i < 3; i++)
 		callingModel->specifyPoint(

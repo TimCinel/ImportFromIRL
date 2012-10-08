@@ -108,6 +108,7 @@
     <ClCompile Include="..\src\GeometryOperations.cpp" />
     <ClCompile Include="..\src\ImmediateModel.cpp" />
     <ClCompile Include="..\src\ImportFromIRL.cpp" />
+    <ClCompile Include="..\src\vec3f.cpp" />
     <ClCompile Include="..\src\WindowsKinectInterface.cpp" />
     <ClCompile Include="..\src\KinectReceiver.cpp" />
     <ClCompile Include="..\src\sdlbase.cpp" />
