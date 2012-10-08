@@ -31,18 +31,15 @@
 #include "vec3f.h"
 
 #include <vector>
-
 using namespace std;
 
 
-/* Setting  Defaults */
+//defaults
 #define DEFAULT_LIGHTING		true
 #define DEFAULT_WIREFRAME		false
 #define DEFAULT_OSD				true
-#define DEFAULT_TESSELATION		64
-#define DEFAULT_METHOD			METHOD_VERTEX_BUFFER_OBJECT	
 
-/* Scene globals */
+//application globals
 AppSettings settings;
 Camera camera;
 float currentFramerate;
@@ -56,6 +53,7 @@ AbstractKinectInterface *kinect = NULL;
 KinectReceiver *captureReceiver = NULL;
 RenderModel *method = NULL;
 
+vector<KinectReceiver *> frames;
 
 void setRenderOptions() {
 
@@ -96,8 +94,6 @@ void init() {
 	settings.renderOptions[RENDER_LIGHTING] = DEFAULT_LIGHTING;
 	settings.renderOptions[RENDER_WIREFRAME] = DEFAULT_WIREFRAME;
 	settings.renderOptions[RENDER_OSD] = DEFAULT_OSD;
-	settings.tesselation = DEFAULT_TESSELATION;
-	settings.selectedMethod = DEFAULT_METHOD;
 	settings.running = true;
 
 	memset(&camera, 0, sizeof(Camera));
@@ -379,9 +375,23 @@ void processCommand(char *command) {
 			cout << "Invalid mode \"" + arguments + "\"" << ".\n";
 
 	if (STATE_CAPTURE == settings.state) {
+
 		if ("source" == directive) {
+			//switch depth and colour source
 			openSource(arguments);
+		} else if ("stash" == directive) {
+			//save the current frame
+			if (NULL != captureReceiver) {
+				KinectReceiver *frame = new KinectReceiver(captureReceiver);
+				frames.push_back(frame);
+
+				cout << "Frame #" << frames.size() << " stashed.\n";
+			} else {
+				cout << "Failed to stash the frame.\n";
+			}
+
 		} else if ("dump" == directive) {
+			//record depth and colour data to file
 			if (NULL != kinect && kinect->startDump((char *)arguments.c_str())) {
 				cout << "Started dump to \"" << arguments << "\".\n";
 				settings.state = STATE_CAPTURE_DUMP;
@@ -389,6 +399,7 @@ void processCommand(char *command) {
 				cout << "Failed to start dump to \"" << arguments << "\".\n";
 			}
 		}
+
 	} else if (STATE_CAPTURE_DUMP == settings.state) {
 		//any input is taken as "stop dump" command
 		if (NULL != kinect && kinect->endDump())
@@ -434,10 +445,7 @@ void keyDown(int key) {
 		printf("Frame rate: %f\n", currentFramerate);
 	else if (key == SDLK_l)  
 		settings.renderOptions[RENDER_LIGHTING] = !settings.renderOptions[RENDER_LIGHTING];
-	else if (key == SDLK_m) { 
-		settings.selectedMethod = (RenderMethod)((settings.selectedMethod + 1) % NUM_RENDER_METHOD);
-		deleteMethod = true;
-	} else if (key == SDLK_o) {
+	else if (key == SDLK_o) {
 		settings.renderOptions[RENDER_OSD] = !settings.renderOptions[RENDER_OSD];
 		printf("OSD: %s\n", (settings.renderOptions[RENDER_OSD] ? "ON" : "OFF"));
 	} else if (key == SDLK_F4) {
