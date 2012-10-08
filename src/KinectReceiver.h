@@ -43,8 +43,8 @@ public:
 	void addPoint(unsigned short depth);
 
 	//culling plane stuff
-	void addPlane(CullPlane plane);
-	std::vector<CullPlane> getPlanes();
+	void addPlane(CullPlane plane) { this->planes.push_back(plane); }
+	vector<CullPlane> *getPlanes() { return &(this->planes); }
 
 	int getWidth() { return this->width; }
 	int getHeight() { return this->height; }

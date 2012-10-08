@@ -13,28 +13,6 @@ KinectReceiver::KinectReceiver() {
 	this->init();
 } 
 
-/*
-KinectReceiver::KinectReceiver(KinectReceiver *kr) {
-	this->init();
-
-	//prepare arrays
-	this->initialiseImage(kr->width, kr->height);
-
-	//copy translation
-	this->translation = kr->translation;
-
-	//copy arrays
-	memcpy(this->verts, kr->verts, this->height * this->width * sizeof(vec3f));
-	memcpy(this->norms, kr->norms, this->height * this->width * sizeof(vec3f));
-	memcpy(this->vertTriMap, kr->vertTriMap, 
-			this->height * this->width * MAX_TRIS_PER_VERT * sizeof(int));
-	memcpy(this->tris, kr->tris, 
-			(this->height - 1) * (this->width - 1) * MAX_TRIS_PER_VERT * sizeof(unsigned int));
-	memcpy(this->triNorms, kr->triNorms, 
-			(this->height - 1) * (this->width - 1) * 2 * sizeof(vec3f));
-}
-*/
-
 KinectReceiver::~KinectReceiver() {
 	this->cleanUp();
 }
@@ -88,24 +66,30 @@ void KinectReceiver::addPoint(unsigned short depth) {
 
 	static const float pi = 3.14159265f;
     static const float l_max = -2.0;
+    static const vec3f offset(0.0, 0.0, 1.0);
     static const float wide_angle = (57 / 360.0f) * 2.0f*pi;
     static const float high_angle = (43 / 360.0f) * 2.0f*pi;
     static const float wide_offset = -wide_angle / 2;
     static const float high_offset = -high_angle / 2;
     static const unsigned short max_depth = 0x1000;		
 
-	point->x = l_max * sin(wide_offset + ((float)x / this->width) * wide_angle);
-	point->y = l_max * sin(high_offset + ((float)y / this->height) * high_angle);
+	point->x = l_max * 
+        sin(wide_offset + ((float)x / this->width) * wide_angle);
+	point->y = l_max * 
+        sin(high_offset + ((float)y / this->height) * high_angle);
 	point->z = l_max * 
 		cos(wide_offset + ((float)x / this->width) * wide_angle) * 
 		cos(high_offset + ((float)y / this->height) * high_angle);
 
-	//scale 
+	//scale point based on depth
 	float scaleFactor = (float)depth / max_depth;
 
-	point->x *= scaleFactor;
-	point->y *= scaleFactor;
-	point->z *= scaleFactor;
+	point->x = point->x * scaleFactor + offset.x;
+	point->y = point->y * scaleFactor + offset.y;
+	point->z = point->z * scaleFactor + offset.z;
+
+
+
 
 	if (this->pos == this->height * this->width - 1) {
 

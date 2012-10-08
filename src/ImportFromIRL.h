@@ -2,6 +2,7 @@
 #define IMPORT_FROM_IRL_H
 
 #include "vec3f.h"
+#include "CursorReceiver.h"
 
 typedef enum t_RenderMethod {
 	METHOD_VERTEX_BUFFER_OBJECT,
@@ -32,6 +33,7 @@ typedef struct t_AppSettings {
 	unsigned int tesselation;
 	unsigned int duplication;
 	
+    CursorReceiver *cursorReceiver;
 	vec3f *translateTarget;
 	unsigned int *primaryAdjustTarget;
 	unsigned int *secondaryAdjustTarget;

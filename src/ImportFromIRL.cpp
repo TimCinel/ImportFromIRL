@@ -39,6 +39,7 @@
 #include "CullPlane.h"
 
 #include "Camera.h"
+#include "CameraCursorReceiver.h"
 #include "vec3f.h"
 
 #include <vector>
@@ -55,6 +56,9 @@ static const float TRANSLATE_DELTA	= 0.05;
 //application globals
 AppSettings settings;
 Camera camera;
+CameraCursorReceiver camCursor(&camera);
+
+
 float currentFramerate;
 int windowWidth;
 int windowHeight;
@@ -62,11 +66,17 @@ int lastMouseX = 0;
 int lastMouseY = 0;
 unsigned long animationClock = 0;
 
+//reused stuff
 AbstractKinectInterface *kinect = NULL;
-KinectReceiver *captureReceiver = NULL;
 RenderModel *method = NULL;
 
+//capture stuff
+KinectReceiver *captureReceiver = NULL;
+
+//edit and workspace stuff
+RenderModel *editRenderer = NULL;
 vector<KinectReceiver> frames;
+KinectReceiver *currentFrame = NULL;
 
 void setRenderOptions() {
 
@@ -110,7 +120,7 @@ void init() {
 
 	memset(&camera, 0, sizeof(Camera));
 	camera.sensitivity = 0.3f;
-	camera.zoom = 2.0f;
+	camera.zoom = 1.0f;
 
 
 	//CUSTOM INITIALISATION
@@ -233,9 +243,12 @@ void display() {
 
 	if (STATE_WORKSPACE == settings.state) {
 		//iterate through and draw the frames
+        settings.cursorReceiver = &camCursor;
 
 	} else if (STATE_CAPTURE == settings.state || STATE_CAPTURE_DUMP == settings.state) {
 		//just display from the device or a dump
+        settings.cursorReceiver = &camCursor;
+
 		if (NULL == captureReceiver) {
 			captureReceiver = new KinectReceiver();
 			settings.translateTarget = captureReceiver->getTranslation();
@@ -256,19 +269,16 @@ void display() {
 			method->draw();
 
 	} else if (STATE_EDIT == settings.state && 0 != frames.size()) {
-		static KinectReceiver *frame = NULL;
-		static RenderModel *editRenderer = NULL;
+        settings.cursorReceiver = &camCursor;
 		
 		settings.primaryAdjustTarget = &(settings.selectedFrame);
 		settings.secondaryAdjustTarget = &(settings.selectedFrame);
 
-        cout << "Displaying frame #" << settings.selectedFrame << "\n";
-
 		if (settings.selectedFrame >= frames.size())
 			settings.selectedFrame = 0;
 
-		if (frame != &frames[settings.selectedFrame]) {
-			frame = &frames[settings.selectedFrame];
+		if (currentFrame != &frames[settings.selectedFrame]) {
+			currentFrame = &frames[settings.selectedFrame];
 
 			if (NULL != editRenderer)
 				delete editRenderer;
@@ -277,13 +287,29 @@ void display() {
 		}
 
 		if (NULL == editRenderer)
-			editRenderer = new ImmediateModel(frame, 0, GL_TRIANGLES);
+			editRenderer = new ImmediateModel(currentFrame, 0, GL_TRIANGLES);
 
 		//pan object
-		glTranslatef(settings.translateTarget->x, settings.translateTarget->y, settings.translateTarget->z);
+		glTranslatef(settings.translateTarget->x, 
+                     settings.translateTarget->y, 
+                     settings.translateTarget->z);
 
 		//draw!
 		editRenderer->draw();
+
+        //draw culling planes
+        glColor3f(1.0, 0.0, 0.0);
+
+        vector<CullPlane> *planes = currentFrame->getPlanes();
+        for (int i = 0; i < planes->size(); i++) {
+			CullPlane *plane = &(planes->at(i));
+			ImmediateModel planeRenderer(&((*planes)[i]), 0, GL_TRIANGLES);
+
+			planeRenderer.draw();
+
+            cout << "Drawing plane #" << i << "...\n";
+        }
+
 
 	}
 
@@ -315,33 +341,13 @@ void update(float dt) {
 }
 
 void mouseDown(int button, int state, int x, int y) {
-	if (button == SDL_BUTTON_LEFT)
-		camera.rotating = (state == 1);
-	if (button == SDL_BUTTON_RIGHT)
-		camera.zooming = (state == 1);
+    if (NULL != settings.cursorReceiver)
+        settings.cursorReceiver->mouseDown(button, state, x, y);
 }
 
 void mouseMove(int x, int y) {
-	int dx = x - lastMouseX;
-	int dy = y - lastMouseY;
-
-	switch (settings.state)  {
-		case STATE_CAPTURE:
-		case STATE_WORKSPACE:
-		case STATE_EDIT:
-			if (camera.rotating) {
-				camera.rotY += dx * camera.sensitivity;
-				camera.rotX += dy * camera.sensitivity;
-			} 
-			if (camera.zooming) {
-				camera.zoom -= dy * camera.zoom * camera.sensitivity * 0.03f;
-			}
-		default:
-			break;
-	};
-
-	lastMouseX = x;
-	lastMouseY = y;
+    if (NULL != settings.cursorReceiver)
+        settings.cursorReceiver->mouseMove(x, y);
 }
 
 void changeMode(ApplicationStates newState) {
@@ -482,7 +488,19 @@ void processCommand(char *command) {
 			cout << "Dump stop failed. Might be worth restarting...\n";
 
 		settings.state = STATE_CAPTURE;
-	}
+	} else if (STATE_EDIT == settings.state) {
+        if (NULL == currentFrame) {
+            //don't bother with proceeding branches
+        } else if ("plane" == directive && "add" == arguments) {
+            currentFrame->addPlane(CullPlane());
+
+			currentFrame->getPlanes()->back().rotate(vec3f(0.5, 0.25, -0.02));
+
+            cout << "Added plane to frame\n";
+        } else if ("plane" == directive && "rotate" == arguments) {
+        } else if ("plane" == directive && "move" == arguments) {
+        }
+    }
 
 }
 
