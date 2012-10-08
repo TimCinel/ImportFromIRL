@@ -20,6 +20,9 @@ KinectReceiver::KinectReceiver(KinectReceiver *kr) {
 	//prepare arrays
 	this->initialiseImage(kr->width, kr->height);
 
+	//copy translation
+	this->translation = kr->translation;
+
 	//copy arrays
 	memcpy(this->verts, kr->verts, this->height * this->width * sizeof(vec3f));
 	memcpy(this->norms, kr->norms, this->height * this->width * sizeof(vec3f));

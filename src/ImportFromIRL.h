@@ -1,6 +1,8 @@
 #ifndef IMPORT_FROM_IRL_H
 #define IMPORT_FROM_IRL_H
 
+#include "vec3f.h"
+
 typedef enum t_RenderMethod {
 	METHOD_VERTEX_BUFFER_OBJECT,
 	METHOD_VERTEX_ARRAY,
@@ -30,7 +32,7 @@ typedef struct t_AppSettings {
 	unsigned int tesselation;
 	unsigned int duplication;
 	
-	float x, y, z;
+	vec3f *translateTarget;
 
 	RenderMethod selectedMethod;
 	ApplicationStates state;

@@ -35,9 +35,11 @@ using namespace std;
 
 
 //defaults
-#define DEFAULT_LIGHTING		true
-#define DEFAULT_WIREFRAME		false
-#define DEFAULT_OSD				true
+static const bool DEFAULT_LIGHTING  = true;
+static const bool DEFAULT_WIREFRAME = false;
+static const bool DEFAULT_OSD		= true;
+
+static const float TRANSLATE_DELTA	= 0.05;
 
 //application globals
 AppSettings settings;
@@ -90,7 +92,6 @@ void init() {
 	
 	memset(&settings, 0, sizeof(AppSettings));
 
-	settings.x = settings.y = settings.z = 0;
 	settings.renderOptions[RENDER_LIGHTING] = DEFAULT_LIGHTING;
 	settings.renderOptions[RENDER_WIREFRAME] = DEFAULT_WIREFRAME;
 	settings.renderOptions[RENDER_OSD] = DEFAULT_OSD;
@@ -99,6 +100,13 @@ void init() {
 	memset(&camera, 0, sizeof(Camera));
 	camera.sensitivity = 0.3f;
 	camera.zoom = 2.0f;
+
+
+	//CUSTOM INITIALISATION
+	settings.state = STATE_CAPTURE;
+	kinect = new DummyKinectInterface(320, 240, "../data/dump.dat");
+	if (!kinect->connectToKinect())
+		kinect = NULL;
 
 }
 
@@ -125,6 +133,34 @@ void reshape(int width, int height) {
 	glMatrixMode(GL_MODELVIEW);
 }
 
+void drawAxis() {
+	float zero[] = {0.0, 0.0, 0.0};
+
+	glPushAttrib(GL_ENABLE_BIT);
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+	glBegin(GL_LINES);
+
+	glColor3f(1.0,0.0,0.0);
+	glVertex3fv(zero);
+	glVertex3f(1.0, 0.0, 0.0);
+
+	glColor3f(0.0,1.0,0.0);
+	glVertex3fv(zero);
+	glVertex3f(0.0, 1.0, 0.0);
+
+	glColor3f(0.0,0.0,1.0);
+	glVertex3fv(zero);
+	glVertex3f(0.0, 0.0, 1.0);
+
+	glColor3f(1.0,1.0,1.0);
+
+	glEnd();
+
+	glPopAttrib();
+
+}
 
 void drawOSD() {
 	char *bufp;
@@ -184,40 +220,36 @@ void display() {
     //prepare to draw
     glPushMatrix();
 
-	switch (settings.state) {
-		case STATE_WORKSPACE:
-			//iterate through and draw the frames
+	if (STATE_WORKSPACE == settings.state) {
+		//iterate through and draw the frames
 
-			break;
+	} else if (STATE_CAPTURE == settings.state || STATE_CAPTURE_DUMP == settings.state) {
+		//just display from the device or a dump
+		if (NULL == captureReceiver) {
+			captureReceiver = new KinectReceiver();
+			settings.translateTarget = captureReceiver->getTranslation();
+		}
 
-		case STATE_CAPTURE:
-		case STATE_CAPTURE_DUMP:
-			//just display from the device or a dump
-			if (NULL == captureReceiver)
-				captureReceiver = new KinectReceiver();
+		if (NULL == method)
+			method = new ImmediateModel(captureReceiver, 0, GL_TRIANGLES);
 
-			if (NULL == method)
-				method = new ImmediateModel(captureReceiver, 0, GL_TRIANGLES);
+		//pan object
+		glTranslatef(settings.translateTarget->x, settings.translateTarget->y, settings.translateTarget->z);
 
-			//pan object
-			glTranslatef(settings.x, settings.y, settings.z);
+		if (settings.running && NULL != kinect)
+			//get new depth data
+			kinect->processDepth(captureReceiver);
 
-			if (settings.running && NULL != kinect)
-				//get new depth data
-				kinect->processDepth(captureReceiver);
+		if (NULL != method)
+			//draw!
+			method->draw();
 
-			if (NULL != method)
-				//draw!
-				method->draw();
-
-			break;
-		case STATE_EDIT:
-			break;
-		default:
-			break;
+	} else if (STATE_EDIT == settings.state) {
 	}
 
     glPopMatrix();
+
+	drawAxis();
 
 	if (settings.renderOptions[RENDER_OSD])
 		drawOSD();
@@ -430,15 +462,18 @@ void keyDown(int key) {
 		else
 			fputs("Failed to read command.\n", stdout);
 
-	} else if (key == SDLK_w)
-		settings.z += 0.05;
-	else if (key == SDLK_a)
-		settings.x -= 0.05;
-	else if (key == SDLK_s)
-		settings.z -= 0.05;
-	else if (key == SDLK_d)
-		settings.x += 0.05;
-		//printf("Windw dimensions: %dx%d\n", windowWidth, windowHeight);
+	} else if (key == SDLK_w && NULL != settings.translateTarget)
+		settings.translateTarget->z -= 0.05;
+	else if (key == SDLK_a && NULL != settings.translateTarget)
+		settings.translateTarget->x += 0.05;
+	else if (key == SDLK_s && NULL != settings.translateTarget)
+		settings.translateTarget->z += 0.05;
+	else if (key == SDLK_d && NULL != settings.translateTarget)
+		settings.translateTarget->x -= 0.05;
+	else if (key == SDLK_r && NULL != settings.translateTarget)
+		settings.translateTarget->y += 0.05;
+	else if (key == SDLK_f && NULL != settings.translateTarget)
+		settings.translateTarget->y -= 0.05;
 	else if (key == SDLK_SPACE)
 		settings.running = !settings.running;
 	else if (key == SDLK_f)

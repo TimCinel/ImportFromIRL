@@ -16,6 +16,8 @@ private:
 	unsigned int *tris;
 	vec3f *triNorms;
 
+	//model offset
+	vec3f translation;
 	std::vector<CullPlane> planes;
 
 	int width, height, triCount;
@@ -46,6 +48,8 @@ public:
 	int getWidth() { return this->width; }
 	int getHeight() { return this->height; }
 	int getTriCount() { return this->triCount; }
+	
+	vec3f *getTranslation() { return &(this->translation); };
 
 private:
 	void init();
