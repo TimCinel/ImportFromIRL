@@ -25,7 +25,7 @@ typedef enum t_ApplicationStates {
 	STATE_CAPTURE_DUMP,
 	STATE_EDIT,
 	STATE_EDIT_PLANE_ROTATE,
-	STATE_EDIT__PLANE_PAN,
+	STATE_EDIT_PLANE_PAN,
 	STATE_INVALID
 } ApplicationStates;
 

@@ -20,13 +20,18 @@ void ImmediateModel::initialise(GeometryGenerator *shape, int resolution, int ge
 	this->geometry = geometry;
 }
 
-void ImmediateModel::draw() {
+void ImmediateModel::drawGeometry() {
 	
-	glBegin(this->geometry);
+	glPushMatrix();
 
+	glBegin(this->geometry);
 	this->shape->generate(this, this->resolution);
 
 	glEnd();
+
+	this->shape->
+
+	glPopMatrix();
 
 }
 

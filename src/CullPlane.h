@@ -3,9 +3,8 @@
 
 #include "vec3f.h"
 #include "GeometryGenerator.h"
-#include "RenderModel.h"
 
-class CullPlane : public GeometryGenerator {
+class CullPlane : public ObjectModel {
 private:
 	vec3f origNormal, normal;
 	vec3f origOffset, offset;
@@ -23,11 +22,11 @@ public:
 		{ this->init(); }
 
     void init();
-    void rotate(vec3f &amount);
-	bool cullPoint(vec3f &point);
+    void rotate(vec3f amount);
+	bool cullPoint(vec3f point);
 
-	//override GeometryGenerator
-	virtual void generate(RenderModel *callingModel, int resolution);
+	//override ObjectModel
+	virtual void drawThis();
 
 };
 

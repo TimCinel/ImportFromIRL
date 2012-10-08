@@ -1,11 +1,18 @@
 #include "KinectReceiver.h"
-
-#include "RenderModel.h"
 #include "GeometryOperations.h"
 
 #include <cstdio>
 #define _USE_MATH_DEFINES
 #include <cmath>
+
+#if defined(_WIN32)
+#	include <windows.h>
+#	include <GL/gl.h>
+#elif defined(__APPLE__)
+#	include <OpenGL/gl.h>
+#else
+#	include <GL/gl.h>
+#endif
 
 const float KinectReceiver::DIFFERENCE_THRESHOLD = 0.05f;
 
@@ -55,14 +62,12 @@ void KinectReceiver::cleanUp() {
 	this->width = 0;
 	this->height = 0;
 	this->pos = 0;
+
+	this->cullPoints = false;
+	this->showPlanes = false;
 }
 
 void KinectReceiver::addPoint(unsigned short depth) {
-
-	vec3f *point = &(this->verts[this->pos++]);
-
-	int x = this->pos % this->width;
-	int y = this->pos / this->width;
 
 	static const float pi = 3.14159265f;
     static const float l_max = -2.0;
@@ -72,6 +77,11 @@ void KinectReceiver::addPoint(unsigned short depth) {
     static const float wide_offset = -wide_angle / 2;
     static const float high_offset = -high_angle / 2;
     static const unsigned short max_depth = 0x1000;		
+
+	vec3f *point = &(this->verts[this->pos++]);
+
+	int x = this->pos % this->width;
+	int y = this->pos / this->width;
 
 	point->x = l_max * 
         sin(wide_offset + ((float)x / this->width) * wide_angle);
@@ -88,8 +98,9 @@ void KinectReceiver::addPoint(unsigned short depth) {
 	point->y = point->y * scaleFactor + offset.y;
 	point->z = point->z * scaleFactor + offset.z;
 
+}
 
-
+void KinectReceiver::generateGeometry() {
 
 	if (this->pos == this->height * this->width - 1) {
 
@@ -128,15 +139,22 @@ void KinectReceiver::addPoint(unsigned short depth) {
 	}
 }
 
-void KinectReceiver::generate(RenderModel *callingModel, int resolution) {
+void KinectReceiver::drawThis() {
 
-	//number of points
-	callingModel->specifySize(this->triCount * 3);
+	if (0 == this->triCount)
+		//geometry hasn't been generated yet - do it now
+		this->generateGeometry();
 
-	int triangleNum;
-	for (triangleNum = 0; triangleNum < this->triCount - 1; triangleNum++)
-		this->drawTriangle(callingModel, triangleNum);
-	return;
+	for (unsigned int triangleNum = 0; triangleNum < this->triCount - 1; triangleNum++)
+		this->drawTriangle(triangleNum);
+
+}
+
+void KinectReceiver::drawChildren() {
+
+	if (this->showPlanes)
+		for (unsigned int i = 0; i < this->planes.size(); i++)
+			planes[i].draw();
 
 }
 
@@ -192,19 +210,24 @@ void KinectReceiver::specifyTriangle(int y0, int x0,
 
 }
 
-void KinectReceiver::drawTriangle(RenderModel *callingModel, int triangleNum)  {
+void KinectReceiver::drawTriangle(unsigned int triangleNum)  {
 	triangleNum *= 3;
 	vec3f point = this->verts[this->tris[triangleNum]];
 
-	//cull
-	for (int i = 0; i < this->planes.size(); i++)
-		if (this->planes[i].cullPoint(point))
-			return;
+	//cull if appropriate
+	if (this->cullPoints)
+		for (unsigned int i = 0; i < this->planes.size(); i++)
+			if (this->planes[i].cullPoint(point))
+				return;
 
-	for (int i = 0; i < 3; i++)
-		callingModel->specifyPoint(
-			&(this->verts[this->tris[triangleNum + i]]), 
-			&(this->norms[this->tris[triangleNum + i]])
-		);
+	vec3f *norm, *vert;
+	for (int i = 0; i < 3; i++) {
+		norm = &(this->norms[this->tris[triangleNum + i]]);
+		vert = &(this->verts[this->tris[triangleNum + i]]);
+
+		glNormal3f(norm->x, norm->y, norm->z);
+		glVertex3f(vert->x, vert->y, vert->z);
+
+	}
 
 }

@@ -13,11 +13,12 @@ void CullPlane::init() {
 		this->offset.y * this->normal.y +
 		this->offset.z * this->normal.z
 	);
-	
 }
 
-void CullPlane::rotate(vec3f &amount) {
-	this->totalRotation = (this->totalRotation + amount);
+void CullPlane::rotate(vec3f amount) {
+	this->totalRotation.x +=  amount.x;
+	this->totalRotation.y +=  amount.y;
+	this->totalRotation.z +=  amount.z;
 
 	this->normal = GeometryOperations::rotate3D(this->origNormal, this->totalRotation);
 
@@ -31,21 +32,17 @@ void CullPlane::rotate(vec3f &amount) {
 	);
 }
 
-void CullPlane::generate(RenderModel *callingModel, int resolution) {
+void CullPlane::drawThis() {
 
-	callingModel->specifySize(6);
+	static const unsigned int tris[] = {0, 1, 2, 2, 3, 0};
 
-    callingModel->specifyPoint(&(this->square[0]), &(this->normal));
-    callingModel->specifyPoint(&(this->square[1]), &(this->normal));
-    callingModel->specifyPoint(&(this->square[2]), &(this->normal));
-
-    callingModel->specifyPoint(&(this->square[2]), &(this->normal));
-    callingModel->specifyPoint(&(this->square[3]), &(this->normal));
-    callingModel->specifyPoint(&(this->square[0]), &(this->normal));
-
+	for (unsigned int i = 0; i < sizeof(tris) / sizeof(unsigned int); i++) {
+		glNormal3f(this->normal.x, this->normal.y, this->normal.z);
+		glVertex3f(this->square[i].x, this->square[i].y, this->square[i].z);
+	}
 }
 
 
-bool CullPlane::cullPoint(vec3f &point) {
+bool CullPlane::cullPoint(vec3f point) {
 	return (point.x * this->normal.x + point.y * this->normal.y + point.z * this->normal.z + d > 0);
 }

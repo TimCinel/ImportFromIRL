@@ -16,12 +16,10 @@ private:
 public:
 	ImmediateModel(GeometryGenerator *shape, int resolution, int geometry);
 
-	void initialise(GeometryGenerator *shape, int resolution, int geometry);
-
-	void draw();
-
-	void specifyPoint(vec3f *vertex, vec3f *normal);
-	void specifySize(int size);
+	virtual void initialise(GeometryGenerator *shape, int resolution, int geometry);
+	virtual void drawGeometry();
+	virtual void specifyPoint(vec3f *vertex, vec3f *normal);
+	virtual void specifySize(int size);
 
 };
 

@@ -32,8 +32,6 @@
 #include "AbstractKinectInterface.h"
 #include "DummyKinectInterface.h"
 
-#include "RenderModel.h"
-#include "ImmediateModel.h"
 #include "GeometryGenerator.h"
 #include "KinectReceiver.h"
 #include "CullPlane.h"
@@ -68,15 +66,14 @@ unsigned long animationClock = 0;
 
 //reused stuff
 AbstractKinectInterface *kinect = NULL;
-RenderModel *method = NULL;
 
 //capture stuff
 KinectReceiver *captureReceiver = NULL;
 
 //edit and workspace stuff
-RenderModel *editRenderer = NULL;
 vector<KinectReceiver> frames;
 KinectReceiver *currentFrame = NULL;
+CullPlane *currentPlane = NULL;
 
 void setRenderOptions() {
 
@@ -225,6 +222,51 @@ void drawOSD() {
 }
 
 void display() {
+	vector<ObjectModel *> renderItems;
+	vector<ObjectModel *> deleteItems;
+
+	if (STATE_WORKSPACE == settings.state) {
+		//iterate through and draw the frames
+        settings.cursorReceiver = &camCursor;
+
+	} else if (STATE_CAPTURE == settings.state || STATE_CAPTURE_DUMP == settings.state) {
+		//just display from the device or a dump
+
+		if (NULL == captureReceiver)
+			captureReceiver = new KinectReceiver();
+
+		if (settings.running && NULL != kinect)
+			//get new depth data
+			kinect->processDepth(captureReceiver);
+
+		//things to draw
+		renderItems.push_back(captureReceiver);
+
+        settings.cursorReceiver = &camCursor;
+		settings.translateTarget = captureReceiver->getPosition();
+
+	} else if ( STATE_EDIT == settings.state && 0 != frames.size()) {
+
+		if (settings.selectedFrame >= frames.size())
+			settings.selectedFrame = 0;
+
+		if (currentFrame != &frames[settings.selectedFrame]) {
+			currentFrame = &frames[settings.selectedFrame];
+        }
+
+        settings.cursorReceiver = &camCursor;
+		settings.translateTarget = currentFrame->getPosition();
+		
+		settings.primaryAdjustTarget = &(settings.selectedFrame);
+		settings.secondaryAdjustTarget = &(settings.selectedFrame);
+
+		//things to draw
+		renderItems.push_back(currentFrame);
+
+        currentFrame->showPlanes = true;
+
+	}
+
 	//clear the colour and depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_COLOR_MATERIAL);
@@ -241,77 +283,8 @@ void display() {
     //prepare to draw
     glPushMatrix();
 
-	if (STATE_WORKSPACE == settings.state) {
-		//iterate through and draw the frames
-        settings.cursorReceiver = &camCursor;
-
-	} else if (STATE_CAPTURE == settings.state || STATE_CAPTURE_DUMP == settings.state) {
-		//just display from the device or a dump
-        settings.cursorReceiver = &camCursor;
-
-		if (NULL == captureReceiver) {
-			captureReceiver = new KinectReceiver();
-			settings.translateTarget = captureReceiver->getTranslation();
-		}
-
-		if (NULL == method)
-			method = new ImmediateModel(captureReceiver, 0, GL_TRIANGLES);
-
-		//pan object
-		glTranslatef(settings.translateTarget->x, settings.translateTarget->y, settings.translateTarget->z);
-
-		if (settings.running && NULL != kinect)
-			//get new depth data
-			kinect->processDepth(captureReceiver);
-
-		if (NULL != method)
-			//draw!
-			method->draw();
-
-	} else if (STATE_EDIT == settings.state && 0 != frames.size()) {
-        settings.cursorReceiver = &camCursor;
-		
-		settings.primaryAdjustTarget = &(settings.selectedFrame);
-		settings.secondaryAdjustTarget = &(settings.selectedFrame);
-
-		if (settings.selectedFrame >= frames.size())
-			settings.selectedFrame = 0;
-
-		if (currentFrame != &frames[settings.selectedFrame]) {
-			currentFrame = &frames[settings.selectedFrame];
-
-			if (NULL != editRenderer)
-				delete editRenderer;
-
-			editRenderer = NULL;
-		}
-
-		if (NULL == editRenderer)
-			editRenderer = new ImmediateModel(currentFrame, 0, GL_TRIANGLES);
-
-		//pan object
-		glTranslatef(settings.translateTarget->x, 
-                     settings.translateTarget->y, 
-                     settings.translateTarget->z);
-
-		//draw!
-		editRenderer->draw();
-
-        //draw culling planes
-        glColor3f(1.0, 0.0, 0.0);
-
-        vector<CullPlane> *planes = currentFrame->getPlanes();
-        for (int i = 0; i < planes->size(); i++) {
-			CullPlane *plane = &(planes->at(i));
-			ImmediateModel planeRenderer(&((*planes)[i]), 0, GL_TRIANGLES);
-
-			planeRenderer.draw();
-
-            cout << "Drawing plane #" << i << "...\n";
-        }
-
-
-	}
+    for (unsigned int i = 0; i < renderItems.size(); i++)
+        renderItems[i]->draw();
 
     glPopMatrix();
 
@@ -319,6 +292,10 @@ void display() {
 
 	if (settings.renderOptions[RENDER_OSD])
 		drawOSD();
+
+    //delete temporary models
+    for (unsigned int i = 0; i < deleteItems.size(); i++)
+        delete deleteItems[i];
 }
 
 /* Called continuously. dt is time between frames in seconds */
@@ -358,11 +335,6 @@ void changeMode(ApplicationStates newState) {
 		cout << "Can't change mode - currently dumping.\n";
 	}
 
-	if (NULL != method) {
-		delete method;
-		method = NULL;
-	}
-
 	settings.state = newState;
 
 	cout << "Application changed state: " << newState << "\n";
@@ -378,10 +350,6 @@ void openSource(string arguments) {
 	if (NULL != captureReceiver)
 		delete captureReceiver;
 	captureReceiver = NULL;
-
-	if (NULL != method)
-		delete method;
-	method = NULL;
 
 	//in with the new
 	if ("none" == arguments) {
@@ -497,10 +465,27 @@ void processCommand(char *command) {
 			currentFrame->getPlanes()->back().rotate(vec3f(0.5, 0.25, -0.02));
 
             cout << "Added plane to frame\n";
-        } else if ("plane" == directive && "rotate" == arguments) {
-        } else if ("plane" == directive && "move" == arguments) {
+		} else if ("plane" == directive && "rotate" == arguments && !currentFrame->getPlanes()->empty()) {
+
+			settings.cursorReceiver = NULL; 
+			currentPlane = NULL;
+			settings.state = STATE_EDIT_PLANE_ROTATE;
+
+        } else if ("plane" == directive && "move" == arguments && !currentFrame->getPlanes()->empty()) {
+
+			settings.cursorReceiver = NULL; 
+			currentPlane = NULL;
+			settings.state = STATE_EDIT_PLANE_PAN;
+
         }
-    }
+	} else if (
+		STATE_EDIT_PLANE_ROTATE == settings.state || 
+		STATE_EDIT_PLANE_PAN == settings.state) {
+			//simply return to edit state
+
+			settings.cursorReceiver = &camCursor;
+			settings.state = STATE_EDIT;
+	}
 
 }
 

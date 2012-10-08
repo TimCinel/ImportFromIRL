@@ -92,11 +92,11 @@
     <ClInclude Include="..\src\GeometryOperations.h" />
     <ClInclude Include="..\src\ImmediateModel.h" />
     <ClInclude Include="..\src\ImportFromIRL.h" />
+    <ClInclude Include="..\src\PlaneCursorReceiver.h" />
     <ClInclude Include="..\src\WindowsKinectInterface.h" />
     <ClInclude Include="..\src\KinectReceiver.h" />
     <ClInclude Include="..\src\stdafx.h" />
     <ClInclude Include="..\src\vec3f.h" />
-    <ClInclude Include="..\src\RenderModel.h" />
     <ClInclude Include="..\src\sdlbase.h" />
     <ClInclude Include="..\src\VertexArrayModel.h" />
     <ClInclude Include="..\src\VertexBufferObjectModel.h" />
@@ -105,15 +105,15 @@
     <ClCompile Include="..\src\CameraCursorReceiver.cpp" />
     <ClCompile Include="..\src\CullPlane.cpp" />
     <ClCompile Include="..\src\DummyKinectInterface.cpp" />
+    <ClCompile Include="..\src\GeometryGenerator.cpp" />
     <ClCompile Include="..\src\GeometryOperations.cpp" />
     <ClCompile Include="..\src\ImmediateModel.cpp" />
     <ClCompile Include="..\src\ImportFromIRL.cpp" />
+    <ClCompile Include="..\src\PlaneCursorReceiver.cpp" />
     <ClCompile Include="..\src\vec3f.cpp" />
     <ClCompile Include="..\src\WindowsKinectInterface.cpp" />
     <ClCompile Include="..\src\KinectReceiver.cpp" />
     <ClCompile Include="..\src\sdlbase.cpp" />
-    <ClCompile Include="..\src\VertexArrayModel.cpp" />
-    <ClCompile Include="..\src\VertexBufferObjectModel.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
