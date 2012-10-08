@@ -1,0 +1,82 @@
+{
+   conditionals1
+   Memcheck:Cond
+   ...
+   obj:/opt/VBoxGuestAdditions-4.1.22/lib/VBoxOGL.so
+   ...
+}
+
+{
+   leaks1
+   Memcheck:Leak
+   ...
+   obj:/opt/VBoxGuestAdditions-4.1.22/lib/VBoxOGL.so
+   ...
+}
+
+{
+   conditionals2
+   Memcheck:Cond
+   ...
+   obj:/opt/VBoxGuestAdditions-4.1.22/lib/VBoxOGLcrutil.so
+   ...
+}
+
+{
+   leaks2
+   Memcheck:Leak
+   ...
+   obj:/opt/VBoxGuestAdditions-4.1.22/lib/VBoxOGLcrutil.so
+   ...
+}
+
+
+{
+   conditionals3
+   Memcheck:Cond
+   ...
+   obj:#
+   ...
+}
+
+{
+   leaks3
+   Memcheck:Leak
+   ...
+   obj:#
+   ...
+}
+
+
+{
+   conditionals4
+   Memcheck:Cond
+   ...
+   obj:#
+   ...
+}
+
+{
+   leaks4
+   Memcheck:Leak
+   ...
+   obj:/usr/lib/i386-linux-gnu/libglut.so.3.9.0
+   ...
+}
+
+
+{
+   conditionals5
+   Memcheck:Cond
+   ...
+   obj:/usr/lib/i386-linux-gnu/libSDL-1.2.so.0.11.3
+   ...
+}
+
+{
+   leaks5
+   Memcheck:Leak
+   ...
+   obj:/usr/lib/libGLEW.so.1.5.2
+   ...
+}
