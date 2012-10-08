@@ -4,16 +4,16 @@
 #include "GeometryOperations.h"
 
 #include <cstdio>
-#include <unordered_map>
 #define _USE_MATH_DEFINES
 #include <cmath>
 
-const float KinectReceiver::DIFFERENCE_THRESHOLD = 0.05;
+const float KinectReceiver::DIFFERENCE_THRESHOLD = 0.05f;
 
 KinectReceiver::KinectReceiver() { 
 	this->init();
 } 
 
+/*
 KinectReceiver::KinectReceiver(KinectReceiver *kr) {
 	this->init();
 
@@ -33,40 +33,30 @@ KinectReceiver::KinectReceiver(KinectReceiver *kr) {
 	memcpy(this->triNorms, kr->triNorms, 
 			(this->height - 1) * (this->width - 1) * 2 * sizeof(vec3f));
 }
+*/
 
 KinectReceiver::~KinectReceiver() {
 	this->cleanUp();
 }
 
 void KinectReceiver::init() {
-	this->verts = NULL;
-	this->norms = NULL;
-	this->vertTriMap = NULL;
-	this->tris = NULL;
-	this->triNorms = NULL;
-	this->triCount = 0;
-	this->width = 0;
-	this->height = 0;
-	this->pos = 0;
+	this->cleanUp();
 }
 
 void KinectReceiver::initialiseImage(int width, int height) {
-
-	this->resetPointer();
 	this->cleanUp();
 
 	this->width = width;
 	this->height = height;
 
-	this->verts = new vec3f[this->height * this->width];
-	this->norms = new vec3f[this->height * this->width];
-	this->vertTriMap = new int[this->height * this->width * MAX_TRIS_PER_VERT];
-	this->tris = new unsigned int[(this->height - 1) * (this->width - 1) * MAX_TRIS_PER_VERT];
-	this->triNorms = new vec3f[(this->height - 1) * (this->width - 1) * 2];
+	vec3f zero(0.0, 0.0, 0.0);
 
-	//set the vertTriMap to empty
-	for (int i = 0; i < this->height * this->width * MAX_TRIS_PER_VERT; i++)
-		this->vertTriMap[i] = TRI_MAP_INVALID_VAL;
+    //initialise the arrays
+	this->verts = vector<vec3f>(this->height * this->width, zero);
+	this->norms = vector<vec3f>(this->height * this->width, zero);
+	this->vertTriMap = vector<int>(this->height * this->width * MAX_TRIS_PER_VERT, TRI_MAP_INVALID_VAL);
+	this->tris = vector<unsigned int>((this->height - 1) * (this->width - 1) * MAX_TRIS_PER_VERT, 0);
+	this->triNorms = vector<vec3f>((this->height - 1) * (this->width - 1) * 2, zero);
 
 }
 
@@ -77,21 +67,16 @@ void KinectReceiver::resetPointer() {
 
 void KinectReceiver::cleanUp() {
 	//clean up dynamically-allocated memory
-	if (NULL != this->verts)
-		delete [] this->verts;
-	this->verts = NULL;
+	this->verts.clear();
+	this->norms.clear();
+	this->vertTriMap.clear();
+	this->tris.clear();
+	this->triNorms.clear();
 
-	if (NULL != this->norms)
-		delete [] this->norms;
-	this->norms = NULL;
-
-	if (NULL != this->tris)
-		delete [] this->tris;
-	this->tris = NULL;
-
-	if (NULL != this->triNorms)
-		delete [] this->triNorms;
-	this->triNorms = NULL;
+	this->triCount = 0;
+	this->width = 0;
+	this->height = 0;
+	this->pos = 0;
 }
 
 void KinectReceiver::addPoint(unsigned short depth) {

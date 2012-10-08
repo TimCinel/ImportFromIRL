@@ -7,18 +7,19 @@
 #include "CullPlane.h"
 
 #include <vector>
+using namespace std;
 
 class KinectReceiver : public GeometryGenerator {
 private:
-	vec3f *verts;
-	vec3f *norms;
-	int *vertTriMap;
-	unsigned int *tris;
-	vec3f *triNorms;
+	vector<vec3f> verts;
+	vector<vec3f> norms;
+	vector<int> vertTriMap;
+	vector<unsigned int> tris;
+	vector<vec3f> triNorms;
 
 	//model offset
 	vec3f translation;
-	std::vector<CullPlane> planes;
+	vector<CullPlane> planes;
 
 	int width, height, triCount;
 	int pos;

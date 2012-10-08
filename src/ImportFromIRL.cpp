@@ -8,17 +8,28 @@
 #include <iostream>
 
 #include <GL/glew.h>
-#include <windows.h>
-#include <GL/gl.h>
-#include <GL/glut.h>
-#include <SDL_keyboard.h>
-#include <SDL_mouse.h>
-#define snprintf _snprintf_s
+
+#if defined(_WIN32)
+#   include <windows.h>
+#   include <GL/gl.h>
+#   include <GL/glut.h>
+#   include <SDL_keyboard.h>
+#   include <SDL_mouse.h>
+#   define snprintf _snprintf_s
+#else
+#	include <GL/gl.h>
+#	include <GL/glut.h>
+#	include <SDL/SDL_keyboard.h>
+#	include <SDL/SDL_mouse.h>
+#endif
 
 #include "sdlbase.h"
 
-#include "AbstractKinectInterface.h"
+#if defined(_WIN32)
 #include "WindowsKinectInterface.h"
+#endif
+
+#include "AbstractKinectInterface.h"
 #include "DummyKinectInterface.h"
 
 #include "RenderModel.h"
@@ -55,7 +66,7 @@ AbstractKinectInterface *kinect = NULL;
 KinectReceiver *captureReceiver = NULL;
 RenderModel *method = NULL;
 
-vector<KinectReceiver *> frames;
+vector<KinectReceiver> frames;
 
 void setRenderOptions() {
 
@@ -244,7 +255,36 @@ void display() {
 			//draw!
 			method->draw();
 
-	} else if (STATE_EDIT == settings.state) {
+	} else if (STATE_EDIT == settings.state && 0 != frames.size()) {
+		static KinectReceiver *frame = NULL;
+		static RenderModel *editRenderer = NULL;
+		
+		settings.primaryAdjustTarget = &(settings.selectedFrame);
+		settings.secondaryAdjustTarget = &(settings.selectedFrame);
+
+        cout << "Displaying frame #" << settings.selectedFrame << "\n";
+
+		if (settings.selectedFrame >= frames.size())
+			settings.selectedFrame = 0;
+
+		if (frame != &frames[settings.selectedFrame]) {
+			frame = &frames[settings.selectedFrame];
+
+			if (NULL != editRenderer)
+				delete editRenderer;
+
+			editRenderer = NULL;
+		}
+
+		if (NULL == editRenderer)
+			editRenderer = new ImmediateModel(frame, 0, GL_TRIANGLES);
+
+		//pan object
+		glTranslatef(settings.translateTarget->x, settings.translateTarget->y, settings.translateTarget->z);
+
+		//draw!
+		editRenderer->draw();
+
 	}
 
     glPopMatrix();
@@ -343,6 +383,7 @@ void openSource(string arguments) {
 
 		cout << "No source selected.\n";
 
+#if defined(_WIN32)
 	} else if ("kinect" == arguments) {
 		//capture from actual kinect
 
@@ -355,6 +396,7 @@ void openSource(string arguments) {
 			delete kinect;
 			kinect = NULL;
 		}
+#endif
 	} else {
 		//capture from dump file
 
@@ -414,8 +456,8 @@ void processCommand(char *command) {
 		} else if ("stash" == directive) {
 			//save the current frame
 			if (NULL != captureReceiver) {
-				KinectReceiver *frame = new KinectReceiver(captureReceiver);
-				frames.push_back(frame);
+				//should copy the current frame
+				frames.push_back(KinectReceiver(*captureReceiver));
 
 				cout << "Frame #" << frames.size() << " stashed.\n";
 			} else {
@@ -474,6 +516,14 @@ void keyDown(int key) {
 		settings.translateTarget->y += 0.05;
 	else if (key == SDLK_f && NULL != settings.translateTarget)
 		settings.translateTarget->y -= 0.05;
+	else if (key == SDLK_LESS && NULL != settings.primaryAdjustTarget)
+		(*settings.primaryAdjustTarget)--;
+	else if (key == SDLK_GREATER && NULL != settings.primaryAdjustTarget)
+		(*settings.primaryAdjustTarget)++;
+	else if (key == SDLK_COMMA && NULL != settings.secondaryAdjustTarget)
+		(*settings.secondaryAdjustTarget)--;
+	else if (key == SDLK_PERIOD && NULL != settings.secondaryAdjustTarget)
+		(*settings.secondaryAdjustTarget)++;
 	else if (key == SDLK_SPACE)
 		settings.running = !settings.running;
 	else if (key == SDLK_f)

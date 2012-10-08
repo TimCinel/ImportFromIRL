@@ -7,10 +7,19 @@
 #define DEFAULT_DEPTH 32
 #define DEFAULT_FLAGS (SDL_OPENGL | SDL_RESIZABLE)
 
-#include <windows.h>
-#include <GL/gl.h>
-#include <GL/glut.h>
-#include "SDL.h"
+#if defined(_WIN32)
+#	include <windows.h>
+#	include <GL/gl.h>
+#	include <GL/glut.h>
+#	include "SDL.h"
+#elif defined(__APPLE__)
+#	include <OpenGL/gl.h>
+#	include <GLUT/glut.h>
+#else
+#	include <GL/gl.h>
+#	include <GL/glut.h>
+#	include "SDL/SDL.h"
+#endif
 
 static int quitFlag = 0;
 

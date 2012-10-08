@@ -33,6 +33,11 @@ typedef struct t_AppSettings {
 	unsigned int duplication;
 	
 	vec3f *translateTarget;
+	unsigned int *primaryAdjustTarget;
+	unsigned int *secondaryAdjustTarget;
+
+	unsigned int selectedFrame;
+	unsigned int selectedPlane;
 
 	RenderMethod selectedMethod;
 	ApplicationStates state;
