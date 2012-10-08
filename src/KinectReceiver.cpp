@@ -8,21 +8,43 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 
+const float KinectReceiver::DIFFERENCE_THRESHOLD = 0.05;
 
-KinectReceiver::KinectReceiver() :
-	verts(NULL),
-	norms(NULL),
-	vertTriMap(NULL),
-	tris(NULL),
-	triNorms(NULL),
-	triCount(0),
-	width(0),
-	height(0),
-	pos(0)
-	{ } 
+KinectReceiver::KinectReceiver() { 
+	this->init();
+} 
+
+KinectReceiver::KinectReceiver(KinectReceiver *kr) {
+	this->init();
+
+	//prepare arrays
+	this->initialiseImage(kr->width, kr->height);
+
+	//copy arrays
+	memcpy(this->verts, kr->verts, this->height * this->width * sizeof(vec3f));
+	memcpy(this->norms, kr->norms, this->height * this->width * sizeof(vec3f));
+	memcpy(this->vertTriMap, kr->vertTriMap, 
+			this->height * this->width * MAX_TRIS_PER_VERT * sizeof(int));
+	memcpy(this->tris, kr->tris, 
+			(this->height - 1) * (this->width - 1) * MAX_TRIS_PER_VERT * sizeof(unsigned int));
+	memcpy(this->triNorms, kr->triNorms, 
+			(this->height - 1) * (this->width - 1) * 2 * sizeof(vec3f));
+}
 
 KinectReceiver::~KinectReceiver() {
 	this->cleanUp();
+}
+
+void KinectReceiver::init() {
+	this->verts = NULL;
+	this->norms = NULL;
+	this->vertTriMap = NULL;
+	this->tris = NULL;
+	this->triNorms = NULL;
+	this->triCount = 0;
+	this->width = 0;
+	this->height = 0;
+	this->pos = 0;
 }
 
 void KinectReceiver::initialiseImage(int width, int height) {
@@ -33,18 +55,15 @@ void KinectReceiver::initialiseImage(int width, int height) {
 	this->width = width;
 	this->height = height;
 
-#define MAX_TRIS_PER_VERT 6
-#define TRI_MAP_INVALID_VAL -1
-
 	this->verts = new vec3f[this->height * this->width];
 	this->norms = new vec3f[this->height * this->width];
 	this->vertTriMap = new int[this->height * this->width * MAX_TRIS_PER_VERT];
-	this->tris = new unsigned int[(this->height - 1) * (this->width - 1) * 2 * 3];
+	this->tris = new unsigned int[(this->height - 1) * (this->width - 1) * MAX_TRIS_PER_VERT];
 	this->triNorms = new vec3f[(this->height - 1) * (this->width - 1) * 2];
 
 	//set the vertTriMap to empty
 	for (int i = 0; i < this->height * this->width * MAX_TRIS_PER_VERT; i++)
-		this->vertTriMap[i] = -1;
+		this->vertTriMap[i] = TRI_MAP_INVALID_VAL;
 
 }
 
@@ -153,9 +172,6 @@ void KinectReceiver::specifyTriangle(int y0, int x0,
 									 int y1, int x1, 
 									 int y2, int x2) 
 {
-
-#define THRESHOLD 0.05
-
 	int indices[3];
 	vec3f *p[3];
 	p[0] = &(this->verts[indices[0] = y0 * this->width + x0]);
@@ -164,15 +180,15 @@ void KinectReceiver::specifyTriangle(int y0, int x0,
 
 	if (
 		//stop LONNNNNG objects
-		abs(p[0]->x - p[1]->x) > THRESHOLD ||
-		abs(p[0]->y - p[1]->y) > THRESHOLD ||
-		abs(p[0]->z - p[1]->z) > THRESHOLD ||
-		abs(p[1]->x - p[2]->x) > THRESHOLD ||
-		abs(p[1]->y - p[2]->y) > THRESHOLD ||
-		abs(p[1]->z - p[2]->z) > THRESHOLD ||
-		abs(p[2]->x - p[0]->x) > THRESHOLD ||
-		abs(p[2]->y - p[0]->y) > THRESHOLD ||
-		abs(p[2]->z - p[0]->z) > THRESHOLD ||
+		abs(p[0]->x - p[1]->x) > DIFFERENCE_THRESHOLD ||
+		abs(p[0]->y - p[1]->y) > DIFFERENCE_THRESHOLD || 
+		abs(p[0]->z - p[1]->z) > DIFFERENCE_THRESHOLD || 
+		abs(p[1]->x - p[2]->x) > DIFFERENCE_THRESHOLD || 
+		abs(p[1]->y - p[2]->y) > DIFFERENCE_THRESHOLD || 
+		abs(p[1]->z - p[2]->z) > DIFFERENCE_THRESHOLD || 
+		abs(p[2]->x - p[0]->x) > DIFFERENCE_THRESHOLD || 
+		abs(p[2]->y - p[0]->y) > DIFFERENCE_THRESHOLD || 
+		abs(p[2]->z - p[0]->z) > DIFFERENCE_THRESHOLD || 
 		p[0]->z == 0 || p[1]->z == 0 || p[2]->z == 0
 	)
 		//the triangle's a PITA
