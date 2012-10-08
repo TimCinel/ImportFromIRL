@@ -1,3 +1,6 @@
 data
 vs/Debug
 .DS_Store
+*.o
+ImportFromIRL
+.*.swp
