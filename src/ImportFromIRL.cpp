@@ -38,6 +38,7 @@
 
 #include "Camera.h"
 #include "CameraCursorReceiver.h"
+#include "PlaneCursorReceiver.h"
 #include "vec3f.h"
 
 #include <vector>
@@ -55,6 +56,7 @@ static const float TRANSLATE_DELTA	= 0.05;
 AppSettings settings;
 Camera camera;
 CameraCursorReceiver camCursor(&camera);
+PlaneCursorReceiver planeCursor(NULL);
 
 
 float currentFramerate;
@@ -245,7 +247,11 @@ void display() {
         settings.cursorReceiver = &camCursor;
 		settings.translateTarget = captureReceiver->getPosition();
 
-	} else if ( STATE_EDIT == settings.state && 0 != frames.size()) {
+	} else if (
+				0 != frames.size() &&
+				(STATE_EDIT == settings.state ||
+				STATE_EDIT_PLANE_ROTATE == settings.state)
+				) {
 
 		if (settings.selectedFrame >= frames.size())
 			settings.selectedFrame = 0;
@@ -253,6 +259,10 @@ void display() {
 		if (currentFrame != &frames[settings.selectedFrame]) {
 			currentFrame = &frames[settings.selectedFrame];
         }
+
+		//display planes and cull points
+        currentFrame->showPlanes = true;
+		currentFrame->cullPoints = true;
 
         settings.cursorReceiver = &camCursor;
 		settings.translateTarget = currentFrame->getPosition();
@@ -263,9 +273,23 @@ void display() {
 		//things to draw
 		renderItems.push_back(currentFrame);
 
-        currentFrame->showPlanes = true;
+		if (STATE_EDIT_PLANE_ROTATE == settings.state &&
+			currentFrame->getPlanes()->size() > 0) {
+			//we're in plane rotate mode and we have at least one plane
 
+			if (settings.selectedPlane >= currentFrame->getPlanes()->size())
+				settings.selectedPlane = 0;
+
+			settings.primaryAdjustTarget = &(settings.selectedPlane);
+			settings.secondaryAdjustTarget = &(settings.selectedPlane);
+			
+			currentPlane = &(currentFrame->getPlanes()->at(settings.selectedPlane));
+			planeCursor.plane = currentPlane;
+			settings.cursorReceiver = &planeCursor;
+			
+		}
 	}
+
 
 	//clear the colour and depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -461,10 +485,8 @@ void processCommand(char *command) {
             //don't bother with proceeding branches
         } else if ("plane" == directive && "add" == arguments) {
             currentFrame->addPlane(CullPlane());
+			cout << "Added plane #" << currentFrame->getPlanes()->size() << "to frame #" << settings.selectedFrame << "\n";
 
-			currentFrame->getPlanes()->back().rotate(vec3f(0.5, 0.25, -0.02));
-
-            cout << "Added plane to frame\n";
 		} else if ("plane" == directive && "rotate" == arguments && !currentFrame->getPlanes()->empty()) {
 
 			settings.cursorReceiver = NULL; 

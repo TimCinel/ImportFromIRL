@@ -6,15 +6,16 @@
 
 class PlaneCursorReceiver : public CursorReceiver {
 private:
-	CullPlane &plane;
-	bool rotating;
-
+	bool yRotating, zRotating;
 	static const float sensitivity;
 
 public:
-	PlaneCursorReceiver(CullPlane &plane) :
+	CullPlane *plane;
+
+	PlaneCursorReceiver(CullPlane *plane) :
 		plane(plane),
-		rotating(false) {}
+		yRotating(false),
+		zRotating(false) {}
 
     virtual void move(int dx, int dy);
     virtual void click(bool left, bool right);
