@@ -10,22 +10,24 @@
 
 class WindowsKinectInterface : public AbstractKinectInterface {
 private:
-    static const int DEPTH_WIDTH = 320;
-    static const int DEPTH_HEIGHT = 240;
+    static const int DEPTH_WIDTH = 320, DEPTH_HEIGHT = 240, DEPTH_BYTES = 240;
+	static const int COLOUR_WIDTH = DEPTH_WIDTH, COLOUR_HEIGHT = DEPTH_HEIGHT;
     static const int DUMP_FILE_LEN = 240;
 
-    INuiSensor *kinectSensor;
+    INuiSensor*			kinectSensor;
 
-    HANDLE      kinectDepthStreamHandle;
-    HANDLE      kinectNextFrameEvent;
+    HANDLE				kinectDepthStreamHandle, kinectColourStreamHandle;
+    HANDLE      		kinectNextDepthFrameEvent, kinectNextColourFrameEvent;
 
-    bool        isConnected;
+    bool				isConnected;
 
-    bool        dumping;
-	char		dumpFile[DUMP_FILE_LEN];
-    FILE        *dumpFP;
+    bool				dumping;
+	char				dumpFile[DUMP_FILE_LEN];
+    FILE*       		dumpFP;
 
-    USHORT      *depthData;
+    unsigned short*     depthData;
+    unsigned char*		colourData;
+    long*				colourCoords;
 
 
 public:
@@ -34,7 +36,7 @@ public:
 
 	/* overriding abstract functions */
     virtual bool connectToKinect();
-	virtual bool processDepth(KinectReceiver *kr);
+	virtual bool processFrame(KinectReceiver *kr);
 
 	virtual bool startDump(char *filename);
 	virtual bool endDump();

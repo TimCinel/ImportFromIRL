@@ -5,8 +5,10 @@
 
 class AbstractKinectInterface {
 public:
+    static const int COLOUR_BYTES = 4;
+
 	virtual bool connectToKinect() = 0;
-	virtual bool processDepth(KinectReceiver *kr) = 0;
+	virtual bool processFrame(KinectReceiver *kr) = 0;
 
 	//can simply return false if not allowed
 	virtual bool startDump(char *filename) = 0;

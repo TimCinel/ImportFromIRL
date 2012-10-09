@@ -11,6 +11,9 @@ private:
 	char *dumpFile;
 	FILE *dumpFP;
 
+	unsigned short *depthData;
+	unsigned char *colourData;
+
 	int width;
 	int height;
 
@@ -20,7 +23,7 @@ public:
 
 	/* overriding abstract functions */
     virtual bool connectToKinect();
-	virtual bool processDepth(KinectReceiver *kr);
+	virtual bool processFrame(KinectReceiver *kr);
 
 	virtual bool startDump(char *filename) { return false; }
 	virtual bool endDump() {return false; }

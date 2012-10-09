@@ -239,7 +239,7 @@ void display() {
 
 		if (settings.running && NULL != kinect)
 			//get new depth data
-			kinect->processDepth(captureReceiver);
+			kinect->processFrame(captureReceiver);
 
 		//things to draw
 		renderItems.push_back(captureReceiver);

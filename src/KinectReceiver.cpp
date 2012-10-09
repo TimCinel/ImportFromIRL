@@ -38,6 +38,7 @@ void KinectReceiver::initialiseImage(int width, int height) {
 
     //initialise the arrays
 	this->verts = vector<vec3f>(this->height * this->width, zero);
+	this->cols = vector<unsigned char>(this->height * this->width * COLOUR_BYTES, 0);
 	this->norms = vector<vec3f>(this->height * this->width, zero);
 	this->vertTriMap = vector<int>(this->height * this->width * MAX_TRIS_PER_VERT, TRI_MAP_INVALID_VAL);
 	this->tris = vector<unsigned int>((this->height - 1) * (this->width - 1) * MAX_TRIS_PER_VERT, 0);
@@ -67,8 +68,9 @@ void KinectReceiver::cleanUp() {
 	this->showPlanes = false;
 }
 
-void KinectReceiver::addPoint(unsigned short depth) {
+void KinectReceiver::addPoints(unsigned short *depths, unsigned char *colours) {
 
+	//projection-related
 	static const float pi = 3.14159265f;
     static const float l_max = -2.0;
     static const vec3f offset(0.0, 0.0, 1.0);
@@ -78,25 +80,42 @@ void KinectReceiver::addPoint(unsigned short depth) {
     static const float high_offset = -high_angle / 2;
     static const unsigned short max_depth = 0x1000;		
 
-	vec3f *point = &(this->verts[this->pos++]);
+	//initialise read pointers
+	unsigned short *depth = depths;
+	unsigned char *colour = colours;
 
-	int x = this->pos % this->width;
-	int y = this->pos / this->width;
+	//initialise write pointers
+	vec3f *vec = &(this->verts[0]);
+	unsigned char *col = &(this->cols[0]);
 
-	point->x = l_max * 
-        sin(wide_offset + ((float)x / this->width) * wide_angle);
-	point->y = l_max * 
-        sin(high_offset + ((float)y / this->height) * high_angle);
-	point->z = l_max * 
-		cos(wide_offset + ((float)x / this->width) * wide_angle) * 
-		cos(high_offset + ((float)y / this->height) * high_angle);
+	while (pos < this->height * this->width) {
+		int x = this->pos % this->width;
+		int y = this->pos / this->width;
 
-	//scale point based on depth
-	float scaleFactor = (float)depth / max_depth;
+		vec->x = l_max * 
+			sin(wide_offset + ((float)x / this->width) * wide_angle);
+		vec->y = l_max * 
+			sin(high_offset + ((float)y / this->height) * high_angle);
+		vec->z = l_max * 
+			cos(wide_offset + ((float)x / this->width) * wide_angle) * 
+			cos(high_offset + ((float)y / this->height) * high_angle);
 
-	point->x = point->x * scaleFactor + offset.x;
-	point->y = point->y * scaleFactor + offset.y;
-	point->z = point->z * scaleFactor + offset.z;
+		//scale point based on depth
+		float scaleFactor = (float)*depth / max_depth;
+
+		vec->x = vec->x * scaleFactor + offset.x;
+		vec->y = vec->y * scaleFactor + offset.y;
+		vec->z = vec->z * scaleFactor + offset.z;
+
+		//advance pointers
+		depth++;
+		colour++;
+		vec++;
+		col += COLOUR_BYTES;
+
+		//advance index
+		pos++;
+	}
 
 }
 

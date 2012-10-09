@@ -4,14 +4,20 @@
 WindowsKinectInterface::WindowsKinectInterface() :
     kinectSensor(NULL),
     kinectDepthStreamHandle(NULL),
-    kinectNextFrameEvent(NULL),
+    kinectColourStreamHandle(NULL),
+    kinectNextDepthFrameEvent(NULL),
+    kinectNextColourFrameEvent(NULL),
     isConnected(false),
     dumping(false),
     dumpFP(NULL)
 {
     this->depthData = new unsigned short[DEPTH_WIDTH * DEPTH_HEIGHT];
-    memset(this->depthData, 0, sizeof(unsigned short)*DEPTH_WIDTH*DEPTH_HEIGHT);
-    memset(this->dumpFile, 0, DUMP_FILE_LEN);
+    this->colourData = new unsigned char[DEPTH_WIDTH * DEPTH_HEIGHT * COLOUR_BYTES];
+	//this->colourCoords = new long[DEPTH_WIDTH * DEPTH_HEIGHT *2];
+
+    //memset(this->depthData, 0, sizeof(unsigned short)*DEPTH_WIDTH*DEPTH_HEIGHT);
+    //memset(this->colourData, 0, sizeof(unsigned short)*DEPTH_WIDTH*DEPTH_HEIGHT);
+    //memset(this->dumpFile, 0, DUMP_FILE_LEN);
 }
 
 WindowsKinectInterface::~WindowsKinectInterface() {
@@ -21,12 +27,20 @@ WindowsKinectInterface::~WindowsKinectInterface() {
         this->kinectSensor->NuiShutdown();
 
     //close event handle
-    if (this->kinectNextFrameEvent != INVALID_HANDLE_VALUE)
-        CloseHandle(this->kinectNextFrameEvent);
+    if (this->kinectNextDepthFrameEvent != INVALID_HANDLE_VALUE)
+        CloseHandle(this->kinectNextDepthFrameEvent);
+
+    //close event handle
+    if (this->kinectNextColourFrameEvent != INVALID_HANDLE_VALUE)
+        CloseHandle(this->kinectNextColourFrameEvent);
 
     //free depth memory
     if (NULL != this->depthData)
         delete[] this->depthData;
+
+    //free depth memory
+    if (NULL != this->depthData)
+		delete[] this->colourData;
 
 }
 
@@ -63,22 +77,38 @@ bool WindowsKinectInterface::connectToKinect() {
 
     if (NULL != this->kinectSensor) {
 
-		//initialise sensor for depth
-        hr = this->kinectSensor->NuiInitialize(NUI_INITIALIZE_FLAG_USES_DEPTH); 
+		//initialise sensor for depth and colour
+        hr = this->kinectSensor->NuiInitialize(
+			NUI_INITIALIZE_FLAG_USES_DEPTH | 
+			NUI_INITIALIZE_FLAG_USES_COLOR); 
 
         if (SUCCEEDED(hr)) {
             //create an event to handle "depth data available" notifications
-            this->kinectNextFrameEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+            this->kinectNextDepthFrameEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+            this->kinectNextColourFrameEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-			//open image stream and start receiving frames
+			//open depth image stream and start receiving frames
             hr = this->kinectSensor->NuiImageStreamOpen(
                 NUI_IMAGE_TYPE_DEPTH,
                 (DEPTH_WIDTH == 640 ? NUI_IMAGE_RESOLUTION_640x480 : NUI_IMAGE_RESOLUTION_320x240),
                 0,
                 2,
-                this->kinectNextFrameEvent,
+                this->kinectNextDepthFrameEvent,
                 &this->kinectDepthStreamHandle);
+
+			//open colour image stream and start receiving frames
+            hr = this->kinectSensor->NuiImageStreamOpen(
+				NUI_IMAGE_TYPE_COLOR,
+                (DEPTH_WIDTH == 640 ? NUI_IMAGE_RESOLUTION_640x480 : NUI_IMAGE_RESOLUTION_320x240),
+                0,
+                2,
+                this->kinectNextColourFrameEvent,
+                &this->kinectColourStreamHandle);
         }
+
+		//enable near mode  
+		hr = this->kinectSensor->NuiImageStreamSetImageFrameFlags(this->kinectDepthStreamHandle, NUI_IMAGE_STREAM_FLAG_ENABLE_NEAR_MODE);
+
     }
 
     if (NULL == this->kinectSensor || FAILED(hr))
@@ -87,59 +117,88 @@ bool WindowsKinectInterface::connectToKinect() {
     return true;
 }
 
-bool WindowsKinectInterface::processDepth(KinectReceiver *kr) {
+bool WindowsKinectInterface::processFrame(KinectReceiver *kr) {
+
     HRESULT hr;
     NUI_IMAGE_FRAME imageFrame;
+    NUI_LOCKED_RECT LockedRect;
 
-    //get the depth frame
+
+    //--DEPTH--
     hr = this->kinectSensor->NuiImageStreamGetNextFrame(this->kinectDepthStreamHandle, 0, &imageFrame);
-
     if (FAILED(hr))
         return false;
 
-    INuiFrameTexture* pTexture = imageFrame.pFrameTexture;
-    NUI_LOCKED_RECT LockedRect;
-
     //lock the frame data
-    pTexture->LockRect(0, &LockedRect, NULL, 0);
+    imageFrame.pFrameTexture->LockRect(0, &LockedRect, NULL, 0);
 
-    // Make sure we have somewhere to store the data
-    if (NULL == this->depthData)
-        return false;
-
-    // Make sure we've received valid data
-    if (LockedRect.Pitch != 0) {
-        USHORT *pixelData = this->depthData;
-
-        const USHORT *depthBuffer = (const USHORT *)LockedRect.pBits;
-        const USHORT *depthBufferEnd = depthBuffer + (DEPTH_WIDTH * DEPTH_HEIGHT);
-
-		//reset receiver
-		kr->initialiseImage(DEPTH_WIDTH, DEPTH_HEIGHT);
-
-        while (depthBuffer < depthBufferEnd) {
-			kr->addPoint(NuiDepthPixelToDepth(*depthBuffer));
-
-            if (this->dumping)
-                *pixelData = NuiDepthPixelToDepth(*depthBuffer);
-
-            pixelData++;
-            depthBuffer++;
-        }
-
-        if (this->dumping && NULL != this->dumpFP) {
-            //dump the depth data to file
-            //pffffppfpppptthpfp (that's the sound of dumping)
-            fwrite(this->depthData, sizeof(unsigned short), DEPTH_WIDTH * DEPTH_HEIGHT, this->dumpFP);
-        }
-
-    }
+	//copy depth data
+	memcpy(
+		this->depthData, 
+		LockedRect.pBits, 
+		min(LockedRect.size, DEPTH_WIDTH * DEPTH_HEIGHT * DEPTH_BYTES)
+		);
 
     //unlock the frame
-    pTexture->UnlockRect(0);
+	hr = imageFrame.pFrameTexture->UnlockRect(0);
+    if (FAILED(hr))
+        return false;
 
     //release the frame
     this->kinectSensor->NuiImageStreamReleaseFrame(this->kinectDepthStreamHandle, &imageFrame);
+    if (FAILED(hr))
+        return false;
+
+
+
+	//--COLOUR--
+	hr = this->kinectSensor->NuiImageStreamGetNextFrame(this->kinectColourStreamHandle, 0, &imageFrame);
+    if (FAILED(hr))
+		return false; 
+    
+    hr = imageFrame.pFrameTexture->LockRect(0, &LockedRect, NULL, 0);
+    if (FAILED(hr))
+		return false; 
+
+	memcpy(
+		this->colourData, 
+		LockedRect.pBits, 
+		min(LockedRect.size, COLOUR_WIDTH * COLOUR_HEIGHT * COLOUR_BYTES)
+		);
+
+    hr = imageFrame.pFrameTexture->UnlockRect(0);
+    if (FAILED(hr))
+		return false; 
+
+	hr = this->kinectSensor->NuiImageStreamReleaseFrame(this->kinectColourStreamHandle, &imageFrame);
+    if (FAILED(hr))
+		return false; 
+
+
+	//reset the receiver object
+	kr->initialiseImage(DEPTH_WIDTH, DEPTH_HEIGHT);
+	kr->addPoints(depthData, colourData);
+
+	if (this->dumping && NULL != this->dumpFP) {
+		//dump the depth data to file
+		//pffffppfpppptthpfp (that's the sound of dumping)
+		fwrite(
+			this->depthData, 
+			sizeof(unsigned short), 
+			DEPTH_WIDTH * DEPTH_HEIGHT, 
+			this->dumpFP
+			);
+
+		fwrite(
+			this->colourData, 
+			sizeof(unsigned char), 
+			COLOUR_WIDTH * COLOUR_HEIGHT * COLOUR_BYTES , 
+			this->dumpFP
+			);
+	}
+
+	//release the receiver
+    this->kinectSensor->NuiImageStreamReleaseFrame(this->kinectColourStreamHandle, &imageFrame);
 
 	return true;
 }

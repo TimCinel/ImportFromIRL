@@ -12,6 +12,7 @@ using namespace std;
 class KinectReceiver : public ObjectModel {
 private:
 	vector<vec3f> verts;
+	vector<unsigned char> cols;
 	vector<vec3f> norms;
 	vector<int> vertTriMap;
 	vector<unsigned int> tris;
@@ -20,6 +21,7 @@ private:
 	int width, height, triCount;
 	int pos;
 
+	static const int COLOUR_BYTES = 4;
 	static const int MAX_TRIS_PER_VERT = 6;
 	static const int TRI_MAP_INVALID_VAL = -1;
 	const static float DIFFERENCE_THRESHOLD;
@@ -40,10 +42,10 @@ public:
 	//used by AbstractKinectInterface
 	void initialiseImage(int width, int height);
 	void resetPointer();
-	void addPoint(unsigned short depth);
+	void addPoints(unsigned short *depths, unsigned char *colours);
 
 
-	//culling plane stuff
+	//culling plane-related
 	void addPlane(CullPlane plane) { this->planes.push_back(plane); }
 	vector<CullPlane> *getPlanes() { return &(this->planes); }
 

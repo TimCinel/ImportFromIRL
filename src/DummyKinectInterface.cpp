@@ -10,10 +10,14 @@ DummyKinectInterface::DummyKinectInterface(int width, int height, char *dumpFile
 {}
 
 DummyKinectInterface::~DummyKinectInterface() {
-	if (NULL == this->dumpFP) {
+	if (NULL != this->depthData)
+		delete [] this->depthData;
+
+	if (NULL != this->colourData)
+		delete [] this->colourData;
+
+	if (NULL == this->dumpFP)
 		fclose(this->dumpFP);
-		this->dumpFP = NULL;
-	}
 }
 
 // overriding abstract functions
@@ -24,23 +28,42 @@ bool DummyKinectInterface::connectToKinect() {
 	return (NULL != this->dumpFP);
 }
 
-bool DummyKinectInterface::processDepth(KinectReceiver *kr) {
+bool DummyKinectInterface::processFrame(KinectReceiver *kr) {
 	//just return dummy data from current buffer
 
 	//reset the receiver
 	kr->initialiseImage(this->width, this->height);
 
 	//make some space for the depth data
-	int numItems = this->width * this->height;
-	unsigned short *depthData;
-	depthData = new unsigned short[numItems];
+	int depthItems = this->width * this->height;
+	int colourItems = this->width * this->height * COLOUR_BYTES;
+
+	if (NULL == this->depthData)
+		this->depthData = new unsigned short[depthItems];
+
+	if (NULL == this->depthData)
+		this->colourData = new unsigned char[colourItems];
 
 	//fetch the next frame of depth data
 	int attempt = 0;
 
 	while (true) {
-		int read = fread(depthData, sizeof(unsigned short), numItems, this->dumpFP);
-		if (numItems == read) 
+
+		int depthRead = fread(
+			this->depthData, 
+			sizeof(unsigned short), 
+			depthItems, 
+			this->dumpFP
+			);
+
+		int colourRead = fread(
+			this->colourData, 
+			sizeof(unsigned char), 
+			colourItems, 
+			this->dumpFP
+			);
+
+		if (depthItems == depthRead && colourItems == colourRead) 
 			//successfully read the expected number of items
 			break;
 		else if (attempt++ < 1) 
@@ -52,10 +75,11 @@ bool DummyKinectInterface::processDepth(KinectReceiver *kr) {
 			return false;
 	}
 
-	for (int i = 0; i < numItems; i++)
-		kr->addPoint(depthData[i]);
+	kr->addPoints(depthData, colourData);
 
 	delete [] depthData;
+	delete [] colourData;
+
 	return true;
 
 }
