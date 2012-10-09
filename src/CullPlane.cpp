@@ -34,11 +34,9 @@ void CullPlane::rotate(vec3f amount) {
 
 void CullPlane::drawThis() {
 
-	static const unsigned int tris[] = {0, 1, 2, 2, 3, 0};
+	glBegin(GL_QUADS);
 
-	glBegin(GL_TRIANGLES);
-
-	for (unsigned int i = 0; i < sizeof(tris) / sizeof(unsigned int); i++) {
+	for (unsigned int i = 0; i < 4; i++) {
 		glNormal3f(this->normal.x, this->normal.y, this->normal.z);
 		glVertex3f(this->square[i].x, this->square[i].y, this->square[i].z);
 	}
