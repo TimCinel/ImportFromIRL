@@ -56,7 +56,7 @@ static const float TRANSLATE_DELTA	= 0.05;
 AppSettings settings;
 Camera camera;
 CameraCursorReceiver camCursor(&camera);
-PlaneCursorReceiver planeCursor(NULL);
+PlaneCursorReceiver planeCursor;
 
 
 float currentFramerate;
@@ -250,7 +250,8 @@ void display() {
 	} else if (
 				0 != frames.size() &&
 				(STATE_EDIT == settings.state ||
-				STATE_EDIT_PLANE_ROTATE == settings.state)
+				STATE_EDIT_PLANE_ROTATE == settings.state ||
+				STATE_EDIT_PLANE_PAN == settings.state)
 				) {
 
 		if (settings.selectedFrame >= frames.size())
@@ -273,7 +274,9 @@ void display() {
 		//things to draw
 		renderItems.push_back(currentFrame);
 
-		if (STATE_EDIT_PLANE_ROTATE == settings.state &&
+		if (
+			(STATE_EDIT_PLANE_ROTATE == settings.state ||
+			STATE_EDIT_PLANE_PAN == settings.state) &&
 			currentFrame->getPlanes()->size() > 0) {
 			//we're in plane rotate mode and we have at least one plane
 
@@ -284,8 +287,14 @@ void display() {
 			settings.secondaryAdjustTarget = &(settings.selectedPlane);
 			
 			currentPlane = &(currentFrame->getPlanes()->at(settings.selectedPlane));
-			planeCursor.plane = currentPlane;
+
 			settings.cursorReceiver = &planeCursor;
+			planeCursor.plane = currentPlane;
+
+			if (STATE_EDIT_PLANE_ROTATE == settings.state)
+				planeCursor.mode = PlaneCursorReceiver::ROTATE_MODE;
+			else
+				planeCursor.mode = PlaneCursorReceiver::PAN_MODE;
 			
 		}
 	}
@@ -489,14 +498,10 @@ void processCommand(char *command) {
 
 		} else if ("plane" == directive && "rotate" == arguments && !currentFrame->getPlanes()->empty()) {
 
-			settings.cursorReceiver = NULL; 
-			currentPlane = NULL;
 			settings.state = STATE_EDIT_PLANE_ROTATE;
 
-        } else if ("plane" == directive && "move" == arguments && !currentFrame->getPlanes()->empty()) {
+        } else if ("plane" == directive && "pan" == arguments && !currentFrame->getPlanes()->empty()) {
 
-			settings.cursorReceiver = NULL; 
-			currentPlane = NULL;
 			settings.state = STATE_EDIT_PLANE_PAN;
 
         }
