@@ -90,7 +90,6 @@
     <ClInclude Include="..\src\DummyKinectInterface.h" />
     <ClInclude Include="..\src\GeometryGenerator.h" />
     <ClInclude Include="..\src\GeometryOperations.h" />
-    <ClInclude Include="..\src\ImmediateModel.h" />
     <ClInclude Include="..\src\ImportFromIRL.h" />
     <ClInclude Include="..\src\PlaneCursorReceiver.h" />
     <ClInclude Include="..\src\WindowsKinectInterface.h" />
@@ -107,7 +106,6 @@
     <ClCompile Include="..\src\DummyKinectInterface.cpp" />
     <ClCompile Include="..\src\GeometryGenerator.cpp" />
     <ClCompile Include="..\src\GeometryOperations.cpp" />
-    <ClCompile Include="..\src\ImmediateModel.cpp" />
     <ClCompile Include="..\src\ImportFromIRL.cpp" />
     <ClCompile Include="..\src\PlaneCursorReceiver.cpp" />
     <ClCompile Include="..\src\vec3f.cpp" />

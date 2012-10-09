@@ -1,7 +1,6 @@
 #ifndef IMMEDIATEMODEL_H
 #define IMMEDIATEMODEL_H
 
-#include "RenderModel.h"
 #include "CullPlane.h"
 
 #include <vector>

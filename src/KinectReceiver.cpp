@@ -102,40 +102,36 @@ void KinectReceiver::addPoint(unsigned short depth) {
 
 void KinectReceiver::generateGeometry() {
 
-	if (this->pos == this->height * this->width - 1) {
+	//get triangles based on vertexes
+	for (int y = 0; y < this->height - 1; y++) {
+		for (int x = 0; x < this->width - 1; x++) {
+			this->specifyTriangle(y, x, y+1, x+1, y+1, x);
+			this->specifyTriangle(y, x, y, x+1, y+1, x+1);
+		}
+	}
 
-		//get triangles based on vertexes
-		for (int y = 0; y < this->height - 1; y++) {
-			for (int x = 0; x < this->width - 1; x++) {
-				this->specifyTriangle(y, x, y+1, x+1, y+1, x);
-				this->specifyTriangle(y, x, y, x+1, y+1, x+1);
-			}
+	//get normals for each vertex
+	for (int i = 0; i < this->height * this->width; i++) {
+		vec3f *normal = &(this->norms[i]);
+		normal->x = normal->y = normal->z = 0.0;
+
+		int j = i * 6;
+		int jMax = j + 6;
+
+		//average all triangle surface normals associated with this vertex
+		while (this->vertTriMap[j] >= 0 && j < jMax) {
+			normal->x += this->triNorms[this->vertTriMap[j]].x;
+			normal->y += this->triNorms[this->vertTriMap[j]].y;
+			normal->z += this->triNorms[this->vertTriMap[j]].z;
+			j++;
 		}
 
-		//get normals for each vertex
-		for (int i = 0; i < this->height * this->width; i++) {
-			vec3f *normal = &(this->norms[i]);
-			normal->x = normal->y = normal->z = 0.0;
+		//normalize vector
+		float magnitude = sqrt(pow(normal->x, 2) + pow(normal->y, 2) + pow(normal->z, 2));
+		normal->x /= magnitude;
+		normal->y /= magnitude;
+		normal->z /= magnitude;
 
-			int j = i * 6;
-			int jMax = j + 6;
-
-			//average all triangle surface normals associated with this vertex
-			while (this->vertTriMap[j] >= 0 && j < jMax) {
-				normal->x += this->triNorms[this->vertTriMap[j]].x;
-				normal->y += this->triNorms[this->vertTriMap[j]].y;
-				normal->z += this->triNorms[this->vertTriMap[j]].z;
-				j++;
-			}
-
-			//normalize vector
-			float magnitude = sqrt(pow(normal->x, 2) + pow(normal->y, 2) + pow(normal->z, 2));
-			normal->x /= magnitude;
-			normal->y /= magnitude;
-			normal->z /= magnitude;
-
-			//next vertex
-		}
 	}
 }
 
@@ -145,8 +141,12 @@ void KinectReceiver::drawThis() {
 		//geometry hasn't been generated yet - do it now
 		this->generateGeometry();
 
-	for (unsigned int triangleNum = 0; triangleNum < this->triCount - 1; triangleNum++)
+	glBegin(GL_TRIANGLES);
+	
+	for (unsigned int triangleNum = 0; triangleNum < this->triCount; triangleNum++)
 		this->drawTriangle(triangleNum);
+
+	glEnd();
 
 }
 
