@@ -79,6 +79,7 @@ void KinectReceiver::addPoints(unsigned short *depths, unsigned char *colours) {
     static const float wide_offset = -wide_angle / 2;
     static const float high_offset = -high_angle / 2;
     static const unsigned short max_depth = 0x1000;		
+    int i;
 
 	//initialise read pointers
 	unsigned short *depth = depths;
@@ -107,11 +108,12 @@ void KinectReceiver::addPoints(unsigned short *depths, unsigned char *colours) {
 		vec->y = vec->y * scaleFactor + offset.y;
 		vec->z = vec->z * scaleFactor + offset.z;
 
+        for (i = 0; i < COLOUR_BYTES; i++)
+            *(col++) = *(colour++);
+
 		//advance pointers
 		depth++;
-		colour++;
 		vec++;
-		col += COLOUR_BYTES;
 
 		//advance index
 		pos++;
@@ -248,7 +250,7 @@ void KinectReceiver::drawTriangle(unsigned int triangleNum)  {
 		vert = &(this->verts[this->tris[triangleNum + i]]);
 
 		glNormal3f(norm->x, norm->y, norm->z);
-		glColor3ubv(col);
+		glColor3ub(*(col), *(col + 1), *(col + 2));
 		glVertex3f(vert->x, vert->y, vert->z);
 
 	}

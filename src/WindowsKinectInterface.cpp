@@ -87,15 +87,6 @@ bool WindowsKinectInterface::connectToKinect() {
             this->kinectNextDepthFrameEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
             this->kinectNextColourFrameEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-			//open depth image stream and start receiving frames
-            hr = this->kinectSensor->NuiImageStreamOpen(
-                NUI_IMAGE_TYPE_DEPTH,
-                (DEPTH_WIDTH == 640 ? NUI_IMAGE_RESOLUTION_640x480 : NUI_IMAGE_RESOLUTION_320x240),
-                0,
-                2,
-                this->kinectNextDepthFrameEvent,
-                &this->kinectDepthStreamHandle);
-
 			//open colour image stream and start receiving frames
             hr = this->kinectSensor->NuiImageStreamOpen(
 				NUI_IMAGE_TYPE_COLOR,
@@ -104,10 +95,23 @@ bool WindowsKinectInterface::connectToKinect() {
                 2,
                 this->kinectNextColourFrameEvent,
                 &this->kinectColourStreamHandle);
+            if (FAILED(hr))
+                return false;
+
+			//open depth image stream and start receiving frames
+            hr = this->kinectSensor->NuiImageStreamOpen(
+                NUI_IMAGE_TYPE_DEPTH,
+                (DEPTH_WIDTH == 640 ? NUI_IMAGE_RESOLUTION_640x480 : NUI_IMAGE_RESOLUTION_320x240),
+                0,
+                2,
+                this->kinectNextDepthFrameEvent,
+                &this->kinectDepthStreamHandle);
+            if (FAILED(hr))
+                return false;
         }
 
 		//enable near mode  
-		hr = this->kinectSensor->NuiImageStreamSetImageFrameFlags(this->kinectDepthStreamHandle, NUI_IMAGE_STREAM_FLAG_ENABLE_NEAR_MODE);
+		//hr = this->kinectSensor->NuiImageStreamSetImageFrameFlags(this->kinectDepthStreamHandle, NUI_IMAGE_STREAM_FLAG_ENABLE_NEAR_MODE);
 
     }
 
@@ -133,11 +137,7 @@ bool WindowsKinectInterface::processFrame(KinectReceiver *kr) {
     imageFrame.pFrameTexture->LockRect(0, &LockedRect, NULL, 0);
 
 	//copy depth data
-	memcpy(
-		this->depthData, 
-		LockedRect.pBits, 
-		min(LockedRect.size, DEPTH_WIDTH * DEPTH_HEIGHT * DEPTH_BYTES)
-		);
+	memcpy(this->depthData, LockedRect.pBits, LockedRect.size);
 
     //unlock the frame
 	hr = imageFrame.pFrameTexture->UnlockRect(0);
@@ -160,11 +160,7 @@ bool WindowsKinectInterface::processFrame(KinectReceiver *kr) {
     if (FAILED(hr))
 		return false; 
 
-	memcpy(
-		this->colourData, 
-		LockedRect.pBits, 
-		min(LockedRect.size, COLOUR_WIDTH * COLOUR_HEIGHT * COLOUR_BYTES)
-		);
+	memcpy(this->colourData, LockedRect.pBits, LockedRect.size);
 
     hr = imageFrame.pFrameTexture->UnlockRect(0);
     if (FAILED(hr))

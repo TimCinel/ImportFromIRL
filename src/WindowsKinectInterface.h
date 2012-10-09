@@ -10,8 +10,8 @@
 
 class WindowsKinectInterface : public AbstractKinectInterface {
 private:
-    static const int DEPTH_WIDTH = 320, DEPTH_HEIGHT = 240, DEPTH_BYTES = 240;
-	static const int COLOUR_WIDTH = DEPTH_WIDTH, COLOUR_HEIGHT = DEPTH_HEIGHT;
+    static const int DEPTH_WIDTH = 640, DEPTH_HEIGHT = 480;
+	static const int COLOUR_WIDTH = DEPTH_WIDTH, COLOUR_HEIGHT = DEPTH_HEIGHT, DEPTH_BYTES = 2;
     static const int DUMP_FILE_LEN = 240;
 
     INuiSensor*			kinectSensor;

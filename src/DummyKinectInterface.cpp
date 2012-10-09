@@ -5,6 +5,8 @@
 DummyKinectInterface::DummyKinectInterface(int width, int height, char *dumpFile) : 
 	dumpFile(dumpFile),
 	dumpFP(NULL),
+	depthData(NULL),
+	colourData(NULL),
 	width(width),
 	height(height)
 {}
@@ -41,7 +43,7 @@ bool DummyKinectInterface::processFrame(KinectReceiver *kr) {
 	if (NULL == this->depthData)
 		this->depthData = new unsigned short[depthItems];
 
-	if (NULL == this->depthData)
+	if (NULL == this->colourData)
 		this->colourData = new unsigned char[colourItems];
 
 	//fetch the next frame of depth data
@@ -76,9 +78,6 @@ bool DummyKinectInterface::processFrame(KinectReceiver *kr) {
 	}
 
 	kr->addPoints(depthData, colourData);
-
-	delete [] depthData;
-	delete [] colourData;
 
 	return true;
 

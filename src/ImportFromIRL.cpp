@@ -124,7 +124,7 @@ void init() {
 
 	//CUSTOM INITIALISATION
 	settings.state = STATE_CAPTURE;
-	kinect = new DummyKinectInterface(320, 240, "../data/dump.dat");
+	kinect = new DummyKinectInterface(640, 480, "../data/first_colour.dat");
 	if (!kinect->connectToKinect())
 		kinect = NULL;
 
