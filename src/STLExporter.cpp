@@ -7,11 +7,13 @@
 using namespace std;
 
 bool STLExporter::exportToFile(vector<ObjectFragment> &fragments, const char *fileName) {
+
     FILE *fp = fopen(fileName, "wb");
 
     if (NULL == fp)
         return false;
 
+    //use this to write to file
     unsigned char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
 
@@ -40,7 +42,10 @@ bool STLExporter::exportToFile(vector<ObjectFragment> &fragments, const char *fi
         return false;
     }
 
+    //transform vertices before spitting out data
+    FragmentExporter::processFragments(fragments);
 
+    //convenient pointer that allows us to treat the buffer as an array of float[3]s
     vec3f *points = (vec3f *)buffer;
     unsigned short attributes = 0;
 
