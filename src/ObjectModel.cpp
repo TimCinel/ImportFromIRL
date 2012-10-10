@@ -8,11 +8,11 @@ void ObjectModel::draw() {
     
     glPushMatrix();
 
-    glTranslatef(this->position.x, this->position.y, this->position.z);
-
     glRotatef(this->rotation.x, 1.0, 0.0, 0.0);
     glRotatef(this->rotation.y, 0.0, 1.0, 0.0);
     glRotatef(this->rotation.z, 0.0, 0.0, 1.0);
+
+    glTranslatef(this->position.x, this->position.y, this->position.z);
 
     //draw this object itself
     this->drawThis();

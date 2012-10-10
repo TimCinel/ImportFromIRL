@@ -27,6 +27,7 @@ public:
     void init();
 
     void rotate(vec3f amount);
+    void reset();
 
     //PanTarget
     virtual void pan(vec3f amount);

@@ -101,6 +101,7 @@ void setRenderOptions() {
         );
 }
 
+
 void init() {
 
 #ifndef _WIN32
@@ -122,9 +123,8 @@ void init() {
     settings.renderOptions[RENDER_OSD] = DEFAULT_OSD;
     settings.running = true;
 
-    memset(&camera, 0, sizeof(Camera));
-    camera.sensitivity = 0.3f;
-    camera.zoom = 1.0f;
+    camera.sensitivity = Camera::DEFAULT_SENSITIVITY;
+    camera.zoom = Camera::DEFAULT_ZOOM;
 
 
     //CUSTOM INITIALISATION
@@ -644,6 +644,8 @@ void keyDown(int key) {
     } else if (key == SDLK_F4) {
         settings.renderOptions[RENDER_WIREFRAME] = !settings.renderOptions[RENDER_WIREFRAME];
         printf("Wireframe: %s\n", (settings.renderOptions[RENDER_WIREFRAME] ? "ON" : "OFF"));
+    } else if (key == SDLK_0 && NULL != settings.cursorReceiver) {
+        settings.cursorReceiver->reset();
     }
 
 }

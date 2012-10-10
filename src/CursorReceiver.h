@@ -27,6 +27,8 @@ public:
 
     virtual void move(int dx, int dy) = 0;
     virtual void click(bool left, bool right) = 0;
+    virtual void reset() = 0;
+
 };
 
 #endif

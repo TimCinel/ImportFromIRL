@@ -24,6 +24,7 @@ public:
 
     virtual void move(int dx, int dy);
     virtual void click(bool left, bool right);
+    virtual void reset();
 
 };
 

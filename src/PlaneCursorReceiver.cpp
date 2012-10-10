@@ -13,3 +13,9 @@ void PlaneCursorReceiver::click(bool left, bool right) {
     this->yRotating = left;
     this->zRotating = right;
 }
+
+void PlaneCursorReceiver::reset() {
+    if (NULL != this->plane) {
+        this->plane->reset();
+    }
+}

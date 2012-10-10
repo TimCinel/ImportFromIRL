@@ -16,3 +16,9 @@ void CameraCursorReceiver::move(int dx, int dy) {
     }
 
 }
+
+void CameraCursorReceiver::reset() {
+    //reset rotation
+    this->camera->rotX = this->camera->rotY = 0.0;
+    this->camera->zoom = Camera::DEFAULT_ZOOM;
+}

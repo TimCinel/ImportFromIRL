@@ -23,3 +23,38 @@ vec3f GeometryOperations::rotate3D(vec3f &point, vec3f &rotation) {
 
 	return vec3f(result[0], result[1], result[2]);
 }
+
+Matrix4f GeometryOperations::convertModelViewMatrix(float mvmatrix[16]) {
+    Matrix4f modelViewMatrix;
+
+    for (int i = 0; i < 16; i++)
+        modelViewMatrix(i) = mvmatrix[i];
+
+    return modelViewMatrix;
+}
+
+void GeometryOperations::transformVertices(
+        Matrix4f &transformationMatrix,
+        vec3f *vertex, 
+        unsigned int numVertices
+        ) {
+
+    Vector4f vect;
+
+    for (int i = 0; i < numVertices; i++) {
+        //convert to 4x1 matrix
+        vect = Vector4f(vertex->x, vertex->y, vertex->z, 1.0);
+
+        //multiply
+        vect = transformationMatrix * vect;
+
+        //save back to vertex
+        vertex->x = vect[0];
+        vertex->y = vect[1];
+        vertex->z = vect[2];
+
+        //next vertex, please
+        vertex++;
+    }
+
+}

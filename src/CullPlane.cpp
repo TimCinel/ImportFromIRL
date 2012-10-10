@@ -24,6 +24,17 @@ void CullPlane::rotate(vec3f amount) {
     this->calculateD();
 }
 
+void CullPlane::reset() {
+    this->totalRotation = vec3f();
+    this->normal = origNormal;
+    this->offset = vec3f();
+
+    for (int i = 0; i < 4; i++)
+        this->square[i] = origSquare[i];
+
+    this->calculateD();
+}
+
 void CullPlane::pan(vec3f amount) {
     this->offset.x += amount.x;
     this->offset.y += amount.y;
