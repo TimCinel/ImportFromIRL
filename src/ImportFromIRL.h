@@ -42,6 +42,7 @@ typedef struct t_AppSettings {
 
 	unsigned int selectedFrame;
 	unsigned int selectedPlane;
+	unsigned int selectedFragment;
 
 	RenderMethod selectedMethod;
 	ApplicationStates state;
