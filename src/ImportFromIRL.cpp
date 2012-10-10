@@ -50,7 +50,7 @@ static const bool DEFAULT_LIGHTING  = true;
 static const bool DEFAULT_WIREFRAME = false;
 static const bool DEFAULT_OSD		= true;
 
-static const float TRANSLATE_DELTA	= 0.05;
+static const float TRANSLATE_DELTA	= 0.2;
 
 //application globals
 AppSettings settings;
@@ -156,9 +156,8 @@ void reshape(int width, int height) {
 void drawAxis() {
 	float zero[] = {0.0, 0.0, 0.0};
 
-	glPushAttrib(GL_ENABLE_BIT);
+	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
 
-	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
 	glBegin(GL_LINES);
 
@@ -187,9 +186,11 @@ void drawOSD() {
 	char buffer[32];
 	
 	/* Backup previous "enable" state */
-	glPushAttrib(GL_ENABLE_BIT);
+	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
+    glColor3f(1.0, 1.0, 1.0);
 
 	/* Create a temporary orthographic projection, matching
 	 * window dimensions, and push it onto the stack */
@@ -245,7 +246,7 @@ void display() {
 		renderItems.push_back(captureReceiver);
 
         settings.cursorReceiver = &camCursor;
-		settings.translateTarget = captureReceiver->getPosition();
+		settings.panTarget = captureReceiver;
 
 	} else if (
 				0 != frames.size() &&
@@ -266,7 +267,7 @@ void display() {
 		currentFrame->cullPoints = true;
 
         settings.cursorReceiver = &camCursor;
-		settings.translateTarget = currentFrame->getPosition();
+		settings.panTarget = currentFrame;
 		
 		settings.primaryAdjustTarget = &(settings.selectedFrame);
 		settings.secondaryAdjustTarget = &(settings.selectedFrame);
@@ -291,10 +292,13 @@ void display() {
 			settings.cursorReceiver = &planeCursor;
 			planeCursor.plane = currentPlane;
 
-			if (STATE_EDIT_PLANE_ROTATE == settings.state)
+            settings.panTarget = currentPlane;
+
+			if (STATE_EDIT_PLANE_ROTATE == settings.state) {
 				planeCursor.mode = PlaneCursorReceiver::ROTATE_MODE;
-			else
+            } else {
 				planeCursor.mode = PlaneCursorReceiver::PAN_MODE;
+            }
 			
 		}
 	}
@@ -534,18 +538,23 @@ void keyDown(int key) {
 		else
 			fputs("Failed to read command.\n", stdout);
 
-	} else if (key == SDLK_w && NULL != settings.translateTarget)
-		settings.translateTarget->z -= 0.05;
-	else if (key == SDLK_a && NULL != settings.translateTarget)
-		settings.translateTarget->x += 0.05;
-	else if (key == SDLK_s && NULL != settings.translateTarget)
-		settings.translateTarget->z += 0.05;
-	else if (key == SDLK_d && NULL != settings.translateTarget)
-		settings.translateTarget->x -= 0.05;
-	else if (key == SDLK_r && NULL != settings.translateTarget)
-		settings.translateTarget->y += 0.05;
-	else if (key == SDLK_f && NULL != settings.translateTarget)
-		settings.translateTarget->y -= 0.05;
+
+    //PANNING
+	} else if (key == SDLK_w && NULL != settings.panTarget)
+		settings.panTarget->pan(vec3f(0.0, 0.0, -TRANSLATE_DELTA));
+	else if (key == SDLK_a && NULL != settings.panTarget)
+		settings.panTarget->pan(vec3f(TRANSLATE_DELTA, 0.0, 0.0));
+	else if (key == SDLK_s && NULL != settings.panTarget)
+		settings.panTarget->pan(vec3f(0.0, 0.0, TRANSLATE_DELTA));
+	else if (key == SDLK_d && NULL != settings.panTarget)
+		settings.panTarget->pan(vec3f(-TRANSLATE_DELTA, 0.0, 0.0));
+	else if (key == SDLK_r && NULL != settings.panTarget)
+		settings.panTarget->pan(vec3f(0.0, TRANSLATE_DELTA, 0.0));
+	else if (key == SDLK_f && NULL != settings.panTarget)
+		settings.panTarget->pan(vec3f(0.0, -TRANSLATE_DELTA, 0.0));
+
+
+    //SELECTING
 	else if (key == SDLK_LESS && NULL != settings.primaryAdjustTarget)
 		(*settings.primaryAdjustTarget)--;
 	else if (key == SDLK_GREATER && NULL != settings.primaryAdjustTarget)
@@ -554,8 +563,12 @@ void keyDown(int key) {
 		(*settings.secondaryAdjustTarget)--;
 	else if (key == SDLK_PERIOD && NULL != settings.secondaryAdjustTarget)
 		(*settings.secondaryAdjustTarget)++;
+
+    //PAUSE / RESUME
 	else if (key == SDLK_SPACE)
 		settings.running = !settings.running;
+
+    //OTHER
 	else if (key == SDLK_f)
 		printf("Frame rate: %f\n", currentFramerate);
 	else if (key == SDLK_l)  

@@ -6,7 +6,7 @@ OPTIMISE = -O0
 CFLAGS = `sdl-config --cflags --libs` -lGL -lGLU -lglut $(DEBUG) $(OPTIMISE)
 LDFLAGS = -lGL -lGLU -lglut -lm -lGLEW `sdl-config --libs` 
 EXE = ImportFromIRL
-OBJECTS = ImportFromIRL.o sdlbase.o KinectReceiver.o DummyKinectInterface.o GeometryGenerator.o GeometryOperations.o CameraCursorReceiver.o CullPlane.o
+OBJECTS = ImportFromIRL.o sdlbase.o KinectReceiver.o DummyKinectInterface.o GeometryGenerator.o GeometryOperations.o CameraCursorReceiver.o CullPlane.o PlaneCursorReceiver.o
 
 #default target
 all: $(EXE)

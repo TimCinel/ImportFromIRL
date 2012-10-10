@@ -1,10 +1,13 @@
 #ifndef CULLPLANE_H
 #define CULLPLANE_H
 
+#pragma once
+
 #include "vec3f.h"
 #include "GeometryGenerator.h"
+#include "PanTarget.h"
 
-class CullPlane : public ObjectModel {
+class CullPlane : public ObjectModel, public PanTarget {
 private:
 	vec3f origNormal, normal;
 	vec3f offset;
@@ -23,7 +26,9 @@ public:
     void init();
 
     void rotate(vec3f amount);
-    void pan(vec3f amount);
+
+    //PanTarget
+    virtual void pan(vec3f amount);
 
 	bool cullPoint(vec3f point);
 

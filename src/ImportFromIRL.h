@@ -3,6 +3,7 @@
 
 #include "vec3f.h"
 #include "CursorReceiver.h"
+#include "PanTarget.h"
 
 typedef enum t_RenderMethod {
 	METHOD_VERTEX_BUFFER_OBJECT,
@@ -34,7 +35,8 @@ typedef struct t_AppSettings {
 	unsigned int duplication;
 	
     CursorReceiver *cursorReceiver;
-	vec3f *translateTarget;
+	PanTarget *panTarget;
+
 	unsigned int *primaryAdjustTarget;
 	unsigned int *secondaryAdjustTarget;
 

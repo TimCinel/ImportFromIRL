@@ -4,12 +4,13 @@
 #pragma once
 
 #include "GeometryGenerator.h"
-#include "CullPlane.h"
+#include "PanTarget.h"
 
+#include "CullPlane.h"
 #include <vector>
 using namespace std;
 
-class KinectReceiver : public ObjectModel {
+class KinectReceiver : public ObjectModel, public PanTarget {
 private:
 	vector<vec3f> verts;
 	vector<unsigned char> cols;
@@ -38,6 +39,9 @@ public:
 	//inherited from ObjectModel
 	virtual void drawThis();
 	virtual void drawChildren();
+
+    //inherited from PanTarget
+    virtual void pan(vec3f amount);
 
 	//used by AbstractKinectInterface
 	void initialiseImage(int width, int height);
