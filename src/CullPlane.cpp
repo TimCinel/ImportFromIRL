@@ -61,7 +61,7 @@ void CullPlane::drawThis() {
 }
 
 
-bool CullPlane::cullPoint(vec3f point) {
+bool CullPlane::cullPoint(vec3f &point) {
     return (point.x * this->normal.x + point.y * this->normal.y + point.z * this->normal.z + d > 0);
 }
 

@@ -32,7 +32,7 @@
 #include "AbstractKinectInterface.h"
 #include "DummyKinectInterface.h"
 
-#include "GeometryGenerator.h"
+#include "ObjectModel.h"
 #include "KinectReceiver.h"
 #include "CullPlane.h"
 

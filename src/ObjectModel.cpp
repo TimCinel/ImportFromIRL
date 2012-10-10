@@ -1,4 +1,4 @@
-#include "GeometryGenerator.h"
+#include "ObjectModel.h"
 
 ObjectModel::~ObjectModel() {
 

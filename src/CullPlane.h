@@ -3,9 +3,10 @@
 
 #pragma once
 
-#include "vec3f.h"
-#include "GeometryGenerator.h"
+#include "ObjectModel.h"
 #include "PanTarget.h"
+
+#include "vec3f.h"
 
 class CullPlane : public ObjectModel, public PanTarget {
 private:
@@ -30,7 +31,7 @@ public:
     //PanTarget
     virtual void pan(vec3f amount);
 
-	bool cullPoint(vec3f point);
+	bool cullPoint(vec3f &point);
 
 	//override ObjectModel
 	virtual void drawThis();

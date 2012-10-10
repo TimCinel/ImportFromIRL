@@ -255,10 +255,50 @@ void KinectReceiver::drawTriangle(unsigned int triangleNum)  {
         col = &(this->cols[this->tris[triangleNum + i] * COLOUR_BYTES]);
         vert = &(this->verts[this->tris[triangleNum + i]]);
 
-        glNormal3f(norm->x, norm->y, norm->z);
-        glColor3ub(*(col), *(col + 1), *(col + 2));
-        glVertex3f(vert->x, vert->y, vert->z);
+        glNormal3fv((float *)norm);
+        glColor3ubv(col);
+        glVertex3fv((float *)vert);
 
     }
 
+}
+
+void KinectReceiver::populateFragment(ObjectFragment &fragment) {
+    vector<unsigned int> keepTris;
+
+    //make a nice list of vertex indices that does not include culled polygons
+
+    bool keep;
+    for (int i = 0; i < this->triCount; i++) {
+        keep = true;
+        unsigned int *index = &(this->tris[i * 3]);
+
+        for (unsigned int i = 0; i < this->planes.size(); i++) {
+            if (
+                    this->planes[i].cullPoint(this->verts[*(index + 0)]) ||
+                    this->planes[i].cullPoint(this->verts[*(index + 1)]) ||
+                    this->planes[i].cullPoint(this->verts[*(index + 2)])
+                ) {
+                //at least one of the verts in this tri is rogue 
+                keep = false;
+                break;
+            }
+        }
+
+        if (keep) {
+            //you may live
+            keepTris.push_back(*(index + 0));
+            keepTris.push_back(*(index + 1));
+            keepTris.push_back(*(index + 2));
+        }
+        //else 
+            // not you. you die.
+
+    }
+
+    //cull if appropriate
+    if (this->cullPoints)
+
+    //go forth and populate!
+    fragment = ObjectFragment(this->verts, this->norms, keepTris);
 }

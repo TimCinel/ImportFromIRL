@@ -1,6 +1,6 @@
 #include "GeometryOperations.h"
 
-#include "../lib/eigen/Eigen/Dense";
+#include "../lib/eigen/Eigen/Dense"
 
 using namespace Eigen;
 using namespace std;

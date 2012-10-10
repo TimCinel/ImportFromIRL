@@ -3,11 +3,13 @@
 
 #pragma once
 
-#include "GeometryGenerator.h"
+#include "ObjectModel.h"
 #include "PanTarget.h"
 
 #include "CullPlane.h"
+#include "ObjectFragment.h"
 #include <vector>
+
 using namespace std;
 
 class KinectReceiver : public ObjectModel, public PanTarget {
@@ -56,6 +58,9 @@ public:
 	int getWidth() { return this->width; }
 	int getHeight() { return this->height; }
 	int getTriCount() { return this->triCount; }
+
+    //fragment-related
+    void populateFragment(ObjectFragment &fragment);
 	
 private:
 	void init();
