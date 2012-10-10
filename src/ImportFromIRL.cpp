@@ -40,6 +40,7 @@
 #include "Camera.h"
 #include "CameraCursorReceiver.h"
 #include "PlaneCursorReceiver.h"
+#include "FragmentCursorReceiver.h"
 #include "vec3f.h"
 
 #include <vector>
@@ -58,6 +59,7 @@ AppSettings settings;
 Camera camera;
 CameraCursorReceiver camCursor(&camera);
 PlaneCursorReceiver planeCursor;
+FragmentCursorReceiver fragmentCursor;
 
 
 float currentFramerate;
@@ -78,6 +80,7 @@ vector<KinectReceiver> frames;
 vector<ObjectFragment> fragments;
 KinectReceiver *currentFrame = NULL;
 CullPlane *currentPlane = NULL;
+ObjectFragment *currentFragment = NULL;
 
 void setRenderOptions() {
 
@@ -230,17 +233,41 @@ void display() {
     vector<ObjectModel *> renderItems;
     vector<ObjectModel *> deleteItems;
 
-    if (STATE_WORKSPACE == settings.state) {
-        //iterate through and draw the frames
+    if (
+            0 != (fragments.size()) &&
+            (STATE_WORKSPACE == settings.state ||
+            STATE_WORKSPACE_FRAGMENT_ROTATE == settings.state)
+        ) {
+
+        if (settings.selectedFragment >= fragments.size())
+            settings.selectedFragment = 0;
+
+        if (currentFragment != &(fragments[settings.selectedFragment]))
+            currentFragment = &(fragments[settings.selectedFragment]);
+
         settings.cursorReceiver = &camCursor;
-        settings.panTarget = NULL;
+        settings.panTarget = currentFragment;
         
+        settings.primaryAdjustTarget = &(settings.selectedFragment);
+        settings.secondaryAdjustTarget = &(settings.selectedFragment);
+
         //draw all fragments
         for (int i = 0; i < fragments.size(); i++)
             renderItems.push_back(&(fragments[i]));
 
 
-    } else if (STATE_CAPTURE == settings.state || STATE_CAPTURE_DUMP == settings.state) {
+        if (STATE_WORKSPACE_FRAGMENT_ROTATE == settings.state) {
+            //we're in fragment rotate mode and we have at least one fragment
+
+            settings.cursorReceiver = &fragmentCursor;
+            fragmentCursor.fragment = currentFragment;
+
+        }
+        
+    } else if (
+            STATE_CAPTURE == settings.state || 
+            STATE_CAPTURE_DUMP == settings.state
+              ) {
         //just display from the device or a dump
 
         if (NULL == captureReceiver)
@@ -259,9 +286,8 @@ void display() {
     } else if (
                 0 != frames.size() &&
                 (STATE_EDIT == settings.state ||
-                STATE_EDIT_PLANE_ROTATE == settings.state ||
-                STATE_EDIT_PLANE_PAN == settings.state)
-                ) {
+                STATE_EDIT_PLANE_ROTATE == settings.state)
+              ) {
 
         if (settings.selectedFrame >= frames.size())
             settings.selectedFrame = 0;
@@ -284,8 +310,7 @@ void display() {
         renderItems.push_back(currentFrame);
 
         if (
-            (STATE_EDIT_PLANE_ROTATE == settings.state ||
-            STATE_EDIT_PLANE_PAN == settings.state) &&
+            STATE_EDIT_PLANE_ROTATE == settings.state &&
             currentFrame->getPlanes()->size() > 0) {
             //we're in plane rotate mode and we have at least one plane
 
@@ -301,12 +326,6 @@ void display() {
             planeCursor.plane = currentPlane;
 
             settings.panTarget = currentPlane;
-
-            if (STATE_EDIT_PLANE_ROTATE == settings.state) {
-                planeCursor.mode = PlaneCursorReceiver::ROTATE_MODE;
-            } else {
-                planeCursor.mode = PlaneCursorReceiver::PAN_MODE;
-            }
             
         }
     }
@@ -468,7 +487,16 @@ void processCommand(char *command) {
             cout << "Invalid mode \"" + arguments + "\"" << ".\n";
 
     if (STATE_WORKSPACE == settings.state) {
-
+        if (0 == fragments.size()) {
+            //don't do anything if there are no fragments
+        } else if ("fragment" == directive && "rotate" == arguments) {
+            settings.state = STATE_WORKSPACE_FRAGMENT_ROTATE;
+        } else if ("export" == directive) {
+            cout << "Yet to be implemented...\n";
+        }
+    } else if (STATE_WORKSPACE_FRAGMENT_ROTATE == settings.state) {
+        //return to workspace state
+        settings.state = STATE_WORKSPACE;
     } else if (STATE_CAPTURE == settings.state) {
 
         if ("source" == directive) {
@@ -540,7 +568,6 @@ void processCommand(char *command) {
 
         } else if ("keep" == directive) {
             //user wants to keep this fragment 
-            settings.state = STATE_EDIT_PLANE_ROTATE;
 
             fragments.push_back(ObjectFragment());
             currentFrame->populateFragment(fragments.back());
@@ -549,9 +576,7 @@ void processCommand(char *command) {
                     " in fragment #" << fragments.size() << "\n";
 
         }
-    } else if (
-        STATE_EDIT_PLANE_ROTATE == settings.state || 
-        STATE_EDIT_PLANE_PAN == settings.state) {
+    } else if (STATE_EDIT_PLANE_ROTATE == settings.state) {
             //simply return to edit state
 
             settings.cursorReceiver = &camCursor;

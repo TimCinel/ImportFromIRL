@@ -267,7 +267,6 @@ void KinectReceiver::populateFragment(ObjectFragment &fragment) {
     vector<unsigned int> keepTris;
 
     //make a nice list of vertex indices that does not include culled polygons
-
     bool keep;
     for (int i = 0; i < this->triCount; i++) {
         keep = true;
@@ -296,9 +295,10 @@ void KinectReceiver::populateFragment(ObjectFragment &fragment) {
 
     }
 
-    //cull if appropriate
-    if (this->cullPoints)
-
     //go forth and populate!
     fragment = ObjectFragment(this->verts, this->norms, keepTris);
+
+    //shift it
+    fragment.position = this->position;
+
 }

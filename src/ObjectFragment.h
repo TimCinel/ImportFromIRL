@@ -4,11 +4,12 @@
 #pragma once
 
 #include "ObjectModel.h"
+#include "PanTarget.h"
 
 #include <vector>
 using namespace std;
 
-class ObjectFragment : public ObjectModel {
+class ObjectFragment : public ObjectModel, public PanTarget {
 
 public:
     ObjectFragment() {};
@@ -24,6 +25,9 @@ public:
 
 	//inherited from ObjectModel
 	virtual void drawThis();
+
+	//inherited from PanTarget
+    virtual void pan(vec3f amount);
 
 };
 

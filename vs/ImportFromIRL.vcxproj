@@ -88,9 +88,10 @@
     <ClInclude Include="..\src\CullPlane.h" />
     <ClInclude Include="..\src\CursorReceiver.h" />
     <ClInclude Include="..\src\DummyKinectInterface.h" />
-    <ClInclude Include="..\src\GeometryGenerator.h" />
     <ClInclude Include="..\src\GeometryOperations.h" />
     <ClInclude Include="..\src\ImportFromIRL.h" />
+    <ClInclude Include="..\src\ObjectFragment.h" />
+    <ClInclude Include="..\src\ObjectModel.h" />
     <ClInclude Include="..\src\PlaneCursorReceiver.h" />
     <ClInclude Include="..\src\WindowsKinectInterface.h" />
     <ClInclude Include="..\src\KinectReceiver.h" />
@@ -104,9 +105,10 @@
     <ClCompile Include="..\src\CameraCursorReceiver.cpp" />
     <ClCompile Include="..\src\CullPlane.cpp" />
     <ClCompile Include="..\src\DummyKinectInterface.cpp" />
-    <ClCompile Include="..\src\GeometryGenerator.cpp" />
     <ClCompile Include="..\src\GeometryOperations.cpp" />
     <ClCompile Include="..\src\ImportFromIRL.cpp" />
+    <ClCompile Include="..\src\ObjectFragment.cpp" />
+    <ClCompile Include="..\src\ObjectModel.cpp" />
     <ClCompile Include="..\src\PlaneCursorReceiver.cpp" />
     <ClCompile Include="..\src\vec3f.cpp" />
     <ClCompile Include="..\src\WindowsKinectInterface.cpp" />

@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-DummyKinectInterface::DummyKinectInterface(int width, int height, char *dumpFile) : 
+DummyKinectInterface::DummyKinectInterface(int width, int height, const char *dumpFile) : 
 	dumpFile(dumpFile),
 	dumpFP(NULL),
 	depthData(NULL),

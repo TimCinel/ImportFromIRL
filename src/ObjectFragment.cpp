@@ -16,11 +16,17 @@ void ObjectFragment::drawThis() {
     glVertexPointer(3, GL_FLOAT, 0, &(this->verts[0]));
 
     glEnableClientState(GL_NORMAL_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 0, &(this->norms[0]));
+    glNormalPointer(GL_FLOAT, 0, &(this->norms[0]));
 
     glDrawElements(GL_TRIANGLES, this->tris.size(), GL_UNSIGNED_INT, &(this->tris[0]));
 
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
 
+}
+
+void ObjectFragment::pan(vec3f amount) {
+    this->position.x += amount.x;
+    this->position.y += amount.y;
+    this->position.z += amount.z;
 }

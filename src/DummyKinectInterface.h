@@ -8,7 +8,7 @@
 
 class DummyKinectInterface : public AbstractKinectInterface {
 private:
-	char *dumpFile;
+	const char *dumpFile;
 	FILE *dumpFP;
 
 	unsigned short *depthData;
@@ -18,7 +18,7 @@ private:
 	int height;
 
 public:
-    DummyKinectInterface(int width, int height, char *dumpFile);
+    DummyKinectInterface(int width, int height, const char *dumpFile);
     ~DummyKinectInterface();
 
 	/* overriding abstract functions */
