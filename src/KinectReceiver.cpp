@@ -206,7 +206,7 @@ void KinectReceiver::specifyTriangle(int y0, int x0,
         abs(p[2]->x - p[0]->x) > DIFFERENCE_THRESHOLD || 
         abs(p[2]->y - p[0]->y) > DIFFERENCE_THRESHOLD || 
         abs(p[2]->z - p[0]->z) > DIFFERENCE_THRESHOLD || 
-        p[0]->z == 0 || p[1]->z == 0 || p[2]->z == 0
+        p[0]->x == 0.0 || p[1]->y == 0.0 || p[2]->z == 0.0
     )
         //the triangle's a PITA
         return;

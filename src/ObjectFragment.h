@@ -10,7 +10,6 @@
 using namespace std;
 
 class ObjectFragment : public ObjectModel, public PanTarget {
-
 public:
     ObjectFragment() {};
 

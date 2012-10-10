@@ -36,6 +36,7 @@
 #include "KinectReceiver.h"
 #include "CullPlane.h"
 #include "ObjectFragment.h"
+#include "STLExporter.h"
 
 #include "Camera.h"
 #include "CameraCursorReceiver.h"
@@ -470,9 +471,9 @@ void processCommand(char *command) {
         directive = string(cmd);
     }
 
-    printf("cmd: %s\n", command);
-    cout << "directive: \"" << directive << "\"\n";
-    cout << "arguments: \"" << arguments << "\"\n";
+    //printf("cmd: %s\n", command);
+    //cout << "directive: \"" << directive << "\"\n";
+    //cout << "arguments: \"" << arguments << "\"\n";
 
     if ("quit" == directive)
         quit();
@@ -491,8 +492,15 @@ void processCommand(char *command) {
             //don't do anything if there are no fragments
         } else if ("fragment" == directive && "rotate" == arguments) {
             settings.state = STATE_WORKSPACE_FRAGMENT_ROTATE;
-        } else if ("export" == directive) {
+        } else if ("stlexport" == directive) {
             cout << "Yet to be implemented...\n";
+            STLExporter *exporter = new STLExporter();
+
+            if (exporter->exportToFile(fragments, arguments.c_str()))
+                cout << "STL Export successful.\n";
+            else
+                cout << "STL Export failed.\n";
+
         }
     } else if (STATE_WORKSPACE_FRAGMENT_ROTATE == settings.state) {
         //return to workspace state
