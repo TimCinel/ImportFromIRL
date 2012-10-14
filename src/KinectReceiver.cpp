@@ -256,7 +256,7 @@ void KinectReceiver::drawTriangle(unsigned int triangleNum)  {
         vert = &(this->verts[this->tris[triangleNum + i]]);
 
         glNormal3fv((float *)norm);
-        glColor3ubv(col);
+        glColor3ub(*(col + 2), *(col + 1), *(col + 0));
         glVertex3fv((float *)vert);
 
     }
