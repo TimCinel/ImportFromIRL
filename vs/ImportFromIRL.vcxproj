@@ -52,6 +52,9 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -88,6 +91,7 @@
     <ClInclude Include="..\src\CullPlane.h" />
     <ClInclude Include="..\src\CursorReceiver.h" />
     <ClInclude Include="..\src\DummyKinectInterface.h" />
+    <ClInclude Include="..\src\FragmentExporter.h" />
     <ClInclude Include="..\src\GeometryOperations.h" />
     <ClInclude Include="..\src\ImportFromIRL.h" />
     <ClInclude Include="..\src\ObjectFragment.h" />
@@ -102,14 +106,18 @@
     <ClInclude Include="..\src\VertexBufferObjectModel.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\Camera.cpp" />
     <ClCompile Include="..\src\CameraCursorReceiver.cpp" />
     <ClCompile Include="..\src\CullPlane.cpp" />
     <ClCompile Include="..\src\DummyKinectInterface.cpp" />
+    <ClCompile Include="..\src\FragmentCursorReceiver.cpp" />
+    <ClCompile Include="..\src\FragmentExporter.cpp" />
     <ClCompile Include="..\src\GeometryOperations.cpp" />
     <ClCompile Include="..\src\ImportFromIRL.cpp" />
     <ClCompile Include="..\src\ObjectFragment.cpp" />
     <ClCompile Include="..\src\ObjectModel.cpp" />
     <ClCompile Include="..\src\PlaneCursorReceiver.cpp" />
+    <ClCompile Include="..\src\STLExporter.cpp" />
     <ClCompile Include="..\src\vec3f.cpp" />
     <ClCompile Include="..\src\WindowsKinectInterface.cpp" />
     <ClCompile Include="..\src\KinectReceiver.cpp" />
