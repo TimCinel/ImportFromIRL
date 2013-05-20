@@ -79,34 +79,51 @@ void KinectReceiver::addPoints(unsigned short *depths, unsigned char *colours) {
     static const float wide_offset = -wide_angle / 2;
     static const float high_offset = -high_angle / 2;
     static const unsigned short max_depth = 0x1000;     
+    static vec3f *coordinate_point_map = NULL;
     int i;
+
+    //initialise point map if not already done
+    if (NULL == coordinate_point_map) {
+        coordinate_point_map = new vec3f[this->height * this->width];
+
+        pos = 0;
+        while (pos < this->height * this->width) {
+            int x = this->pos % this->width;
+            int y = this->pos / this->width;
+
+            coordinate_point_map[pos].x = l_max * 
+                sin(wide_offset + ((float)x / this->width) * wide_angle);
+            coordinate_point_map[pos].y = l_max * 
+                sin(high_offset + ((float)y / this->height) * high_angle);
+            coordinate_point_map[pos].z = l_max * 
+                cos(wide_offset + ((float)x / this->width) * wide_angle) * 
+                cos(high_offset + ((float)y / this->height) * high_angle);
+
+            //advance index
+            pos++;
+        }
+    }
 
     //initialise read pointers
     unsigned short *depth = depths;
     unsigned char *colour = colours;
+    vec3f *coord_point = coordinate_point_map;
 
     //initialise write pointers
     vec3f *vec = &(this->verts[0]);
     unsigned char *col = &(this->cols[0]);
 
+    pos = 0;
     while (pos < this->height * this->width) {
         int x = this->pos % this->width;
         int y = this->pos / this->width;
 
-        vec->x = l_max * 
-            sin(wide_offset + ((float)x / this->width) * wide_angle);
-        vec->y = l_max * 
-            sin(high_offset + ((float)y / this->height) * high_angle);
-        vec->z = l_max * 
-            cos(wide_offset + ((float)x / this->width) * wide_angle) * 
-            cos(high_offset + ((float)y / this->height) * high_angle);
-
         //scale point based on depth
         float scaleFactor = (float)*depth / max_depth;
 
-        vec->x = vec->x * scaleFactor + offset.x;
-        vec->y = vec->y * scaleFactor + offset.y;
-        vec->z = vec->z * scaleFactor + offset.z;
+        vec->x = coord_point->x * scaleFactor + offset.x;
+        vec->y = coord_point->y * scaleFactor + offset.y;
+        vec->z = coord_point->z * scaleFactor + offset.z;
 
         for (i = 0; i < COLOUR_BYTES; i++)
             *(col++) = *(colour++);
@@ -114,6 +131,7 @@ void KinectReceiver::addPoints(unsigned short *depths, unsigned char *colours) {
         //advance pointers
         depth++;
         vec++;
+        coord_point++;
 
         //advance index
         pos++;
