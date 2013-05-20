@@ -14,7 +14,7 @@
 #   include <GL/gl.h>
 #endif
 
-const float KinectReceiver::DIFFERENCE_THRESHOLD = 0.1f;
+const float KinectReceiver::DIFFERENCE_THRESHOLD = 0.15f;
 
 KinectReceiver::KinectReceiver() { 
     this->init();
@@ -256,7 +256,7 @@ void KinectReceiver::drawTriangle(unsigned int triangleNum)  {
         vert = &(this->verts[this->tris[triangleNum + i]]);
 
         glNormal3fv((float *)norm);
-        glColor3ub(*(col + 2), *(col + 1), *(col + 0));
+        glColor3ub(col[2], col[1], col[0]);
         glVertex3fv((float *)vert);
 
     }
